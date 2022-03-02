@@ -342,7 +342,7 @@ var project_core = function () {
 
       tinymce.activeEditor.tkConfig = $.extend({}, config, $(tinymce.activeEditor.getElement()).data());
       tinymce.activeEditor.windowManager.open({
-        file: config.siteUrl + '/vendor/ttek/tk-base/assets/js/elFinder/elfinder.html', // use an absolute path!
+        file: config.siteUrl + '/vendor/uom/tk-base/assets/js/elFinder/elfinder.html', // use an absolute path!
         title: 'File Manager',
         width: 900,
         height: 430,
@@ -395,7 +395,7 @@ var project_core = function () {
       content_css: [
         '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
         '//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css',
-        config.siteUrl + '/vendor/ttek/tk-base/assets/js/tk-tinymce.css'
+        config.siteUrl + '/vendor/uom/tk-base/assets/js/tk-tinymce.css'
       ],
       menubar: true,
       toolbar_items_size: 'small',

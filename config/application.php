@@ -21,7 +21,7 @@ $config['site.email'] = 'user@example.com';
  * Setup what paths to check when migrating SQL
  */
 $config['sql.migrate.list'] = array(
-    'Lib Sql' => $config->getVendorPath() . '/ttek/tk-base',
+    'Lib Sql' => $config->getVendorPath() . '/uom/tk-base',
     'Plugin Sql' => $config->getPluginPath(),
     'App Sql' => $config->getSrcPath() . '/config'
 );

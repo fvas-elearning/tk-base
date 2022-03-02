@@ -24,7 +24,7 @@ class Config extends \Tk\Config
     protected function init()
     {
         parent::init();
-        $this->set('system.lib.base.path', $this['system.vendor.path'] . '/ttek/tk-base');
+        $this->set('system.lib.base.path', $this['system.vendor.path'] . '/uom/tk-base');
     }
 
     /**

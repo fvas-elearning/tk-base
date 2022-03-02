@@ -92,7 +92,7 @@ class Log extends \Bs\Controller\AdminIface
     {
         $template = parent::show();
         $template->setAttr('tail', 'data-src', \Bs\Uri::create()->nolog()->set('refresh'));
-        $template->appendJsUrl(\Bs\Uri::create('/vendor/ttek/tk-base/Bs/Controller/Admin/Dev/Tail/jquery.tkTail.js'));
+        $template->appendJsUrl(\Bs\Uri::create('/vendor/uom/tk-base/Bs/Controller/Admin/Dev/Tail/jquery.tkTail.js'));
         $js = <<<JS
 jQuery(function($) {
   $('#tail').tail({
