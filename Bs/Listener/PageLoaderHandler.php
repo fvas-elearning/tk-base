@@ -1,6 +1,7 @@
 <?php
 namespace Bs\Listener;
 
+use Bs\Db\User;
 use Tk\ConfigTrait;
 use Tk\Event\Subscriber;
 
@@ -33,7 +34,7 @@ class PageLoaderHandler implements Subscriber
 
             // Do not use for public pages
             $uri = \Bs\Uri::create();
-            if ($uri->getRoleType(\Tk\ObjectUtil::getClassConstants($this->getConfig()->createRole(), 'TYPE')) == '') {
+            if ($uri->getRoleType($this->getConfig()->getUserTypeList(true)) == '') {
                 return;
             }
 
@@ -43,11 +44,11 @@ $(document).ready(function() {
   $('body').addClass('loaded');
   $(window).on('beforeunload', function(e) {
     // Do not fire loader for some links... Add class="no-loader" for links that you want to force to not use the loader
-    if (e.target && e.target.activeElement &&  
+    if (e.target && e.target.activeElement &&
         ((e.target.activeElement.href && (
-          e.target.activeElement.href.indexOf(config.dataUrl) >= 0 || 
-          e.target.activeElement.href.indexOf('mailto:') >= 0)) || 
-          $(e.target.activeElement).hasClass('no-loader')) 
+          e.target.activeElement.href.indexOf(config.dataUrl) >= 0 ||
+          e.target.activeElement.href.indexOf('mailto:') >= 0)) ||
+          $(e.target.activeElement).hasClass('no-loader'))
         ) {
       $('body').addClass('loaded');
       return;
@@ -57,13 +58,13 @@ $(document).ready(function() {
   // .on('blur', function () {
   //   $('body').removeClass('loaded');
   // });
-  
+
   $(document).keyup(function(e) {
     if (e.key === 'Escape') { // escape key maps to keycode `27`
       $('body').addClass('loaded');
     }
   });
-  
+
 });
 JS;
             $template->appendJs($js);

@@ -10,10 +10,8 @@ use Tk\Db\ModelInterface;
  * @link http://www.tropotek.com/
  * @license Copyright 2019 Michael Mifsud
  */
-trait ForegnKeyTrait
+trait ForeignKeyTrait
 {
-
-
 
     /**
      * @return string
@@ -35,66 +33,38 @@ trait ForegnKeyTrait
 
     /**
      *
-     * Note: This is use as an alias incases where set{Object}()
+     * Note: This is use as an alias in cases where set{Object}()
      *   is already used in the main object for another reason
      *
      * @param Model|ModelInterface $model
-     * @return ForegnKeyTrait
+     * @return ForeignKeyTrait
      */
-    public function setModel($model)
+    public function setForeignModel($model)
     {
-        return $this->setModelObj($model);
+        return $this->setForeignModelObj($model);
     }
 
     /**
-     * @param Model|ModelInterface $model
-     * @return ForegnKeyTrait
-     */
-    public function setModelObj($model)
-    {
-        if ($model instanceof ModelInterface)
-            $this->setFkey(get_class($model));
-        if (is_string($model) && class_exists($model))
-            $this->setFkey($model);
-        return $this;
-    }
-
-    /**
-     * The models DB mapper object for querieng the DB
+     * The models DB mapper object for querying the DB
      *
      * @return null|\Tk\Db\Map\Mapper
      */
-    public function getModelMapper()
+    public function getForeignModelMapper()
     {
         return Model::createMapper($this->getFkey().'Map');
     }
 
     /**
-     *
-     * Note: This is use as an alias incases where find{Object}()
-     *   is already used in the main object for another reason
-     *
      * @param int $modelId
      * @return Model
      * @throws \Exception
      */
-    public function findModel($modelId)
+    public function findForeignModel($modelId)
     {
-        return $this->findModelObj($modelId);
-    }
-
-    /**
-     * @param int $modelId
-     * @return Model
-     * @throws \Exception
-     */
-    public function findModelObj($modelId)
-    {
-        $mapper = $this->getModelMapper();
+        $mapper = $this->getForeignModelMapper();
         if (!$mapper) return null;
         return $mapper->find($modelId);
     }
-
 
     /**
      * @param array $errors

@@ -1,6 +1,7 @@
 <?php
-namespace Bs\Controller\Admin\User;
+namespace Bs\Controller\User;
 
+use Bs\Db\User;
 use Tk\Request;
 use Dom\Template;
 
@@ -15,7 +16,7 @@ class Edit extends \Bs\Controller\AdminEditIface
      * Setup the controller to work with users of this role
      * @var string
      */
-    protected $targetRole = 'user';
+    protected $targetType = User::TYPE_MEMBER;
 
     /**
      * @var \Bs\Db\User
@@ -28,7 +29,7 @@ class Edit extends \Bs\Controller\AdminEditIface
      */
     public function __construct()
     {
-        $this->setPageTitle('User Edit');
+        $this->setPageTitle('Member Edit');
     }
 
     /**
@@ -41,14 +42,14 @@ class Edit extends \Bs\Controller\AdminEditIface
 
     /**
      * @param \Tk\Request $request
-     * @param string $targetRole
+     * @param string $targetType
      * @throws \Exception
      */
-    public function doDefaultRole(\Tk\Request $request, $targetRole)
+    public function doDefaultType(\Tk\Request $request, $targetType)
     {
-        $this->targetRole = $targetRole;
-        switch($targetRole) {
-            case \Bs\Db\Role::TYPE_ADMIN:
+        $this->targetType = $targetType;
+        switch($targetType) {
+            case \Bs\Db\User::TYPE_ADMIN:
                 $this->setPageTitle('Admin Edit');
                 break;
         }
@@ -62,7 +63,7 @@ class Edit extends \Bs\Controller\AdminEditIface
     public function doDefault(\Tk\Request $request)
     {
         $this->user = $this->getConfig()->createUser();
-        $this->user->setRoleId(\Bs\Db\Role::DEFAULT_TYPE_USER);
+        $this->user->setType($this->targetType);
         if ($request->get('userId')) {
             $this->user = $this->getConfig()->getUserMapper()->find($request->get('userId'));
         }
@@ -75,7 +76,7 @@ class Edit extends \Bs\Controller\AdminEditIface
     public function initForm(\Tk\Request $request)
     {
         if ($this->user->getId() == 1 || !$this->getConfig()->getAuthUser()->isAdmin()) {
-            $this->getForm()->appendField(new \Tk\Form\Field\Html('roleId', $this->user->getRole()->getName()))
+            $this->getForm()->appendField(new \Tk\Form\Field\Html('type', $this->user->getType()))
                 ->setAttr('disabled')->addCss('form-control disabled')->setAttr('disabled')
                 ->addCss('form-control disabled')->setTabGroup('Details');
 

@@ -1,6 +1,7 @@
 <?php
 namespace Bs\Listener;
 
+use Bs\Db\User;
 use Tk\ConfigTrait;
 use Tk\Event\Subscriber;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -16,7 +17,7 @@ class MaintenanceHandler implements Subscriber
 
     /**
      * kernel.controller
-     * @param \Symfony\Component\HttpKernel\Event\ControllerEvent $event
+     * @param \Symfony\Component\HttpKernel\Event\FilterControllerEvent $event
      * @throws \Exception
      */
     public function onController($event)
@@ -25,8 +26,10 @@ class MaintenanceHandler implements Subscriber
         $controller = \Tk\Event\Event::findControllerObject($event);
         if (\Tk\Uri::create()->basename() != 'login.html' && !$controller instanceof \Bs\Controller\Login && !$controller instanceof \Bs\Controller\Logout && !$controller instanceof \Bs\Controller\Maintenance && $this->getConfig()->get('site.maintenance.enabled')) {
             if ($this->getConfig()->getAuthUser()) {
-                if ($this->getConfig()->getAuthUser()->hasPermission(\Bs\Db\Permission::TYPE_ADMIN)) return;
-                if ($this->getConfig()->getMasqueradeHandler()->getMasqueradingUser() && $this->getConfig()->getMasqueradeHandler()->getMasqueradingUser()->hasPermission(\Bs\Db\Permission::TYPE_ADMIN)) return;
+                if ($this->getConfig()->getAuthUser()->hasType(User::TYPE_ADMIN)) return;
+                if ($this->getConfig()->getMasqueradeHandler()->getMasqueradingUser() &&
+                    $this->getConfig()->getMasqueradeHandler()->getMasqueradingUser()->hasType(User::TYPE_ADMIN))
+                    return;
             }
             $maintController = new \Bs\Controller\Maintenance();
             $event->setController(array($maintController, 'doDefault'));

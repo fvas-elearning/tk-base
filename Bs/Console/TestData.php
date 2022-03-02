@@ -39,6 +39,11 @@ class TestData extends Iface
         return  sprintf('%s %s %s', $this->createNumberStr(2), $this->createNumberStr(4), $this->createNumberStr(4));
     }
 
+    public function createAddress()
+    {
+        return  sprintf('%s %s %s, %s', $this->createNumberStr(rand(1,4)), $this->createName(), 'Street', 'Melbourne, VIC, 3001');
+    }
+
     public function createDomain()
     {
         return  strtolower($this->createName()).'.com' . ((rand(1,5)==1) ? '.au' : '');
@@ -70,23 +75,78 @@ class TestData extends Iface
         return implode('', $str);
     }
 
-    public function createLipsumStr()
+    public function createStr($len = 12, $chars = 'abcdefghijklmnopqrstuvwxyz')
     {
-        $str = <<<STR
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque venenatis id ex a hendrerit. Fusce dictum quis felis vel cursus. Proin sollicitudin sed justo ut accumsan. Integer tincidunt lacus nibh, quis viverra turpis ultrices eget. Donec in enim et nibh faucibus laoreet. Curabitur aliquam purus vitae luctus vestibulum. Donec facilisis augue vitae lorem gravida ornare. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+        return substr(str_shuffle($chars), 0, $len);
+    }
 
-Fusce sed erat a odio eleifend iaculis vel non urna. Quisque consequat nunc quam, sit amet tincidunt dolor suscipit vel. Fusce id elit ligula. In ut augue purus. Aenean eu molestie ipsum. Sed porta eros quis efficitur euismod. Maecenas nec erat dictum, scelerisque elit at, ornare quam. Pellentesque et feugiat neque.
-STR;
+    public function createWords($cnt = 2, $len = 0, $chars = 'abcdefghijklmnopqrstuvwxyz')
+    {
+        $str = '';
+        for($i = 0; $i < $cnt; $i++) {
+            if ($len == 0) $len = rand(4, 24);
+            $str .= $this->createStr($len, $chars) . ' ';
+        }
+        return trim($str);
+    }
+
+
+    public function createLipsumStr($paragraphs = 2)
+    {
+        $names = array(
+            'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque venenatis id ex a hendrerit. Fusce dictum quis felis vel cursus. Proin sollicitudin sed justo ut accumsan. Integer tincidunt lacus nibh, quis viverra turpis ultrices eget. Donec in enim et nibh faucibus laoreet. Curabitur aliquam purus vitae luctus vestibulum. Donec facilisis augue vitae lorem gravida ornare. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.',
+            'Fusce sed erat a odio eleifend iaculis vel non urna. Quisque consequat nunc quam, sit amet tincidunt dolor suscipit vel. Fusce id elit ligula. In ut augue purus. Aenean eu molestie ipsum. Sed porta eros quis efficitur euismod. Maecenas nec erat dictum, scelerisque elit at, ornare quam. Pellentesque et feugiat neque.'
+        );
+        $str = '';
+        for($i = 0; $i < $paragraphs; $i++) {
+            $str .= $names[rand(0, count($names)-1)] . "\n";
+        }
         return $str;
     }
 
-    public function createLipsumHtml()
+    public function createLipsumHtml($paragraphs = 2)
     {
-        $str = <<<STR
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque venenatis id ex a hendrerit. Fusce dictum quis felis vel cursus. Proin sollicitudin sed justo ut accumsan. Integer tincidunt lacus nibh, quis viverra turpis ultrices eget. Donec in enim et nibh faucibus laoreet. Curabitur aliquam purus vitae luctus vestibulum. Donec facilisis augue vitae lorem gravida ornare. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>
-<p>Fusce sed erat a odio eleifend iaculis vel non urna. Quisque consequat nunc quam, sit amet tincidunt dolor suscipit vel. Fusce id elit ligula. In ut augue purus. Aenean eu molestie ipsum. Sed porta eros quis efficitur euismod. Maecenas nec erat dictum, scelerisque elit at, ornare quam. Pellentesque et feugiat neque.</p>
-STR;
+        $names = array(
+            '<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque venenatis id ex a hendrerit. Fusce dictum quis felis vel cursus. Proin sollicitudin sed justo ut accumsan. Integer tincidunt lacus nibh, quis viverra turpis ultrices eget. Donec in enim et nibh faucibus laoreet. Curabitur aliquam purus vitae luctus vestibulum. Donec facilisis augue vitae lorem gravida ornare. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>',
+            '<p>Fusce sed erat a odio eleifend iaculis vel non urna. Quisque consequat nunc quam, sit amet tincidunt dolor suscipit vel. Fusce id elit ligula. In ut augue purus. Aenean eu molestie ipsum. Sed porta eros quis efficitur euismod. Maecenas nec erat dictum, scelerisque elit at, ornare quam. Pellentesque et feugiat neque.</p>'
+        );
+        $str = '';
+        for($i = 0; $i < $paragraphs; $i++) {
+            $str .= $names[rand(0, count($names)-1)] . "\n";
+        }
         return $str;
+    }
+
+    public function createColourString()
+    {
+        $names = [
+            "AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure", "Beige", "Bisque", "Black", "BlanchedAlmond",
+            "Blue", "BlueViolet", "Brown", "BurlyWood", "CadetBlue", "Chartreuse", "Chocolate", "Coral", "CornflowerBlue",
+            "Cornsilk", "Crimson", "Cyan", "DarkBlue", "DarkCyan", "DarkGoldenRod", "DarkGray", "DarkGrey", "DarkGreen",
+            "DarkKhaki", "DarkMagenta", "DarkOliveGreen", "DarkOrange", "DarkOrchid", "DarkRed", "DarkSalmon", "DarkSeaGreen",
+            "DarkSlateBlue", "DarkSlateGray", "DarkSlateGrey", "DarkTurquoise", "DarkViolet", "DeepPink", "DeepSkyBlue",
+            "DimGray", "DimGrey", "DodgerBlue", "FireBrick", "FloralWhite", "ForestGreen", "Fuchsia", "Gainsboro",
+            "GhostWhite", "Gold", "GoldenRod", "Gray", "Grey", "Green", "GreenYellow", "HoneyDew", "HotPink", "IndianRed",
+            "Indigo", "Ivory", "Khaki", "Lavender", "LavenderBlush", "LawnGreen", "LemonChiffon", "LightBlue", "LightCoral",
+            "LightCyan", "LightGoldenRodYellow", "LightGray", "LightGrey", "LightGreen", "LightPink", "LightSalmon",
+            "LightSeaGreen", "LightSkyBlue", "LightSlateGray", "LightSlateGrey", "LightSteelBlue", "LightYellow", "Lime",
+            "LimeGreen", "Linen", "Magenta", "Maroon", "MediumAquaMarine", "MediumBlue", "MediumOrchid", "MediumPurple",
+            "MediumSeaGreen", "MediumSlateBlue", "MediumSpringGreen", "MediumTurquoise", "MediumVioletRed", "MidnightBlue",
+            "MintCream", "MistyRose", "Moccasin", "NavajoWhite", "Navy", "OldLace", "Olive", "OliveDrab", "Orange", "OrangeRed",
+            "Orchid", "PaleGoldenRod", "PaleGreen", "PaleTurquoise", "PaleVioletRed", "PapayaWhip", "PeachPuff", "Peru",
+            "Pink", "Plum", "PowderBlue", "Purple", "RebeccaPurple", "Red", "RosyBrown", "RoyalBlue", "SaddleBrown", "Salmon",
+            "SandyBrown", "SeaGreen", "SeaShell", "Sienna", "Silver", "SkyBlue", "SlateBlue", "SlateGray", "SlateGrey",
+            "Snow", "SpringGreen", "SteelBlue", "Tan", "Teal", "Thistle", "Tomato", "Turquoise", "Violet", "Wheat", "White",
+            "WhiteSmoke", "Yellow", "YellowGreen",
+        ];
+        return $names[rand(0, count($names)-1)];
+    }
+
+    public function createSpecies()
+    {
+        $names = array('Dog', 'Goat', 'Pig', 'Sheep', 'Cattle', 'Cat', 'Chicken',
+            'Guinea Pig', 'Donkey', 'Fish', 'Horse', 'Rabbit ', 'Bird', 'Snake', 'Possum', 'Kangaroo');
+        return $names[rand(0, count($names)-1)];
     }
 
     public function createBreed()
@@ -142,5 +202,21 @@ STR;
         return $names[rand(0, count($names)-1)];
     }
 
+    /**
+     * @param null|\DateTime $from
+     * @param null|\DateTime $to
+     * @return \DateTime|string
+     */
+    public function createRandomDate($from = null, $to = null)
+    {
+        if (!$from) {
+            $from = \Tk\Date::create(strtotime('10 September 2000'));
+        }
+        if (!$to) {
+            $to = \Tk\Date::create();   // Now
+        }
+        $ts = mt_rand($from->getTimestamp(), $to->getTimestamp());
+        return \Tk\Date::create($ts);
+    }
 
 }

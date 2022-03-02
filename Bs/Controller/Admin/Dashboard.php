@@ -29,7 +29,6 @@ class Dashboard extends \Bs\Controller\AdminIface
     {
         $this->getActionPanel()->setEnabled(false);
 
-
     }
 
     /**

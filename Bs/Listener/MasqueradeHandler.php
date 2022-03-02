@@ -5,7 +5,7 @@ use Tk\ConfigTrait;
 use Tk\Event\Subscriber;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Bs\Db\User;
-use Bs\Db\Role;
+use Bs\Db\UserIface;
 use Tk\Event\AuthEvent;
 use Tk\Auth\AuthEvents;
 
@@ -33,10 +33,11 @@ class MasqueradeHandler implements Subscriber
     /**
      * The order of role permissions
      * @var array
+     * @deprecated use $config->getUserTypeList()
      */
     public static $roleOrder = array(
-        Role::TYPE_ADMIN,        // Highest
-        Role::TYPE_USER          // Lowest
+        User::TYPE_ADMIN,        // Highest
+        User::TYPE_MEMBER        // Lowest
     );
 
     /**
@@ -47,18 +48,17 @@ class MasqueradeHandler implements Subscriber
     public function onMasquerade($event)
     {
         $request = $event->getRequest();
-        $config = \Bs\Config::getInstance();
+        $config = $this->getConfig();
         if (!$request->request->has(static::MSQ)) return;
 
         try {
-            /** @var User $user */
+            /** @var UserIface $user */
             $user = $config->getAuthUser();
             if (!$user) throw new \Tk\Exception('Invalid User');
             /** @var User $msqUser */
             $msqUser = $config->getUserMapper()->findByHash($request->get(static::MSQ));
             if (!$msqUser) throw new \Tk\Exception('Invalid User');
             $this->masqueradeLogin($user, $msqUser);
-
         } catch (\Exception $e) {
             \Tk\Alert::addWarning($e->getMessage());
         }
@@ -70,8 +70,8 @@ class MasqueradeHandler implements Subscriber
     /**
      * Check if this user can masquerade as the supplied msqUser
      *
-     * @param User $user The current User
-     * @param User $msqUser
+     * @param UserIface $user The current User
+     * @param UserIface $msqUser
      * @return bool
      */
     public function canMasqueradeAs($user, $msqUser)
@@ -96,32 +96,32 @@ class MasqueradeHandler implements Subscriber
     }
 
     /**
-     * @param User $user The current User
-     * @param User $msqUser
+     * @param UserIface $user The current User
+     * @param UserIface $msqUser
      * @return bool
      */
     protected function hasPrecedence($user, $msqUser)
     {
         // Get the users role precedence order index
-        $userRoleIdx = $this->getRolePrecedenceIdx($user);
-        $msqRoleIdx = $this->getRolePrecedenceIdx($msqUser);
-        return ($userRoleIdx < $msqRoleIdx);
+        $userTypeIdx = $this->getTypePrecedenceIdx($user);
+        $msqTypeIdx = $this->getTypePrecedenceIdx($msqUser);
+        return ($userTypeIdx < $msqTypeIdx);
     }
 
     /**
      * @param \Bs\Db\UserIface $user
      * @return int
      */
-    public function getRolePrecedenceIdx($user)
+    public function getTypePrecedenceIdx($user)
     {
-        return array_search($user->getRoleType(), static::$roleOrder);
+        //return array_search($user->getType(), static::$roleOrder);
+        return array_search($user->getType(), $this->getConfig()->getUserTypeList());
     }
-
 
     /**
      *
-     * @param User $user
-     * @param User $msqUser
+     * @param UserIface $user
+     * @param UserIface $msqUser
      * @return bool|void
      * @throws \Exception
      */
@@ -129,7 +129,7 @@ class MasqueradeHandler implements Subscriber
     {
         $config = $this->getConfig();
         if (!$msqUser || !$user) return;
-        if ($user->id == $msqUser->id) return;
+        if ($user->getId() == $msqUser->getId()) return;
 
         // Get the masquerade queue from the session
         $msqArr = $config->getSession()->get(static::SID);
@@ -141,9 +141,12 @@ class MasqueradeHandler implements Subscriber
 
         // Save the current user and url to the session, to allow logout
         $userData = array(
-            'userId' => $user->id,
+            'userId' => $user->getId(),
             'url' => \Tk\Uri::create()->remove(static::MSQ)->toString()
         );
+//            if ($config->getSubject() && $this->getConfig()->isLti()) {
+//                $config->getSession()->set('lti.subjectId', $this->getConfig()->getSubject()->getId());   // Limit the dashboard to one subject for LTI logins
+//            }
         array_push($msqArr, $userData);
         // Save the updated masquerade queue
         $config->getSession()->set(static::SID, $msqArr);
@@ -157,6 +160,7 @@ class MasqueradeHandler implements Subscriber
         $e->setResult($result);
         $e->setRedirect($url);
         $config->getEventDispatcher()->dispatch(AuthEvents::LOGIN_SUCCESS, $e);
+
         if ($e->getRedirect())
             $e->getRedirect()->redirect();
 
@@ -210,7 +214,7 @@ class MasqueradeHandler implements Subscriber
     /**
      * Get the user who is masquerading, ignoring any nested masqueraded users
      *
-     * @return \Bs\Db\User|\Bs\Db\UserIface|null
+     * @return UserIface|null
      * @throws \Exception
      */
     public function getMasqueradingUser()
@@ -219,7 +223,7 @@ class MasqueradeHandler implements Subscriber
         $user = null;
         if ($config->getSession()->has(static::SID)) {
             $msqArr = current($config->getSession()->get(static::SID));
-            /** @var \Bs\Db\User $user */
+            /** @var User $user */
             $user = $config->getUserMapper()->find($msqArr['userId']);
         }
         return $user;

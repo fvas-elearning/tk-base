@@ -22,7 +22,6 @@ class Log extends \Bs\Controller\AdminIface
      */
     public function __construct()
     {
-        parent::__construct();
         $this->getConfig()->resetCrumbs();
         $this->logPath = \App\Config::getInstance()->getLogPath();
     }

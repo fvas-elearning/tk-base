@@ -26,6 +26,15 @@ $config['sql.migrate.list'] = array(
     'App Sql' => $config->getSrcPath() . '/config'
 );
 
+
+/*
+ * The user types available to the system
+ */
+$config['user.type.list'] = array(
+    'Administrator' => 'admin',
+    'Member' => 'member'
+);
+
 /*
  * Template folders for pages
  */
@@ -35,7 +44,7 @@ $config['system.theme.admin']   = $config['system.template.path'] . '/admin';
 $config['system.theme.public']  = $config['system.template.path'] . '/public';
 
 $config['template.admin']       = $config['system.theme.admin'] . '/admin.html';
-$config['template.user']        = $config['system.theme.admin'] . '/admin.html';
+$config['template.member']      = $config['system.theme.admin'] . '/admin.html';
 $config['template.public']      = $config['system.theme.public'] . '/public.html';
 
 /*
@@ -101,6 +110,12 @@ $config['log.session'] = $config->getTempPath().'/session.log';
  */
 //$config['mail.bcc'] = array('user1@example.edu.au');
 
+/**
+ * If this is set to true then emails are sent to the logged in users email address
+ */
+$config['system.debug.email.authUser'] = false;
+
+
 /*
  * This make the Form renderer add the required attribute to required
  * fields. This can be disabled by using the novalidate attribute on the form
@@ -152,10 +167,10 @@ $config['system.auth.adapters'] = array(
 
 /*
  * \Tk\Auth\Adapter\Config
+ * Note: Do not use this methid in client production sites
  */
 //$config['system.auth.username'] = 'admin';
 //$config['system.auth.password'] = 'password';
-
 
 
 /* **********************************************
@@ -182,7 +197,6 @@ $config['template.var.page.user-url'] = 'user-url';
 $config['template.var.page.side-nav'] = 'side-nav';
 
 
-
 /* **********************************************
  *  Common URL for the base controllers
  * **********************************************/
@@ -192,5 +206,3 @@ $config['url.auth.login'] = '/login.html';
 $config['url.auth.logout'] = '/logout.html';
 $config['url.auth.register'] = '/register.html';
 $config['url.auth.recover'] = '/recover.html';
-
-

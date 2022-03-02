@@ -1,12 +1,18 @@
 <?php
-namespace Bs\Controller\Admin;
+namespace Bs\Controller;
 
+use Bs\Config;
 use Dom\Template;
 use Tk\Db\Exception;
 use Tk\Request;
 use Tk\Form;
 use Tk\Form\Field;
 use Tk\Form\Event;
+use Tk\Table\Cell\ButtonCollection;
+use Tk\Table\Ui\ActionButton;
+use Tk\Table;
+use Tk\Table\Cell\Date;
+use Tk\Table\Cell\Text;
 
 /**
  * @author Michael Mifsud <info@tropotek.com>
@@ -47,6 +53,14 @@ class PluginManager extends \Bs\Controller\AdminIface
     {
         $this->pluginFactory = $this->getConfig()->getPluginFactory();
 
+        if ($request->has('act')) {
+            $this->doActivatePlugin($request);
+        } else if ($request->has('del')) {
+            $this->doDeletePlugin($request);
+        } else if ($request->has('deact')) {
+            $this->doDeactivatePlugin($request);
+        }
+
         // Upload plugin
         $this->form = $this->getConfig()->createForm('formEdit');
         $this->form->setRenderer($this->getConfig()->createFormRenderer($this->form));
@@ -54,26 +68,131 @@ class PluginManager extends \Bs\Controller\AdminIface
         $this->form->appendField(new Event\Submit('upload', array($this, 'doUpload')))->addCss('btn-primary');
         $this->form->execute();
 
-
-        // TODO: We also need to handle the events associated with them
-        //$actionsCell = $this->getActionsCell();
-
-
         // Plugin manager table
         $this->table = $this->getConfig()->createTable('PluginList');
         $this->table->setRenderer($this->getConfig()->createTableRenderer($this->table));
 
         $this->table->appendCell(new \Tk\Table\Cell\Text('icon'))->setLabel('')
             ->addOnCellHtml(function ($cell, $obj, $html) {
-                // ToDO
                 $pluginName = \Bs\Config::getInstance()->getPluginFactory()->cleanPluginName($obj->name);
                 if (is_file(\Tk\Config::getInstance()->getPluginPath().'/'.$pluginName.'/icon.png')) {
                     $url =  \Tk\Config::getInstance()->getPluginUrl() . '/' . $pluginName . '/icon.png';
-                    $html = sprintf('<img class="media-object" src="%s" var="icon" style="width: 20px;" choice="icon"/>', $url);
+                    $html = sprintf('<img class="media-object" src="%s" var="icon" style="width: 32px;" choice="icon"/>', $url);
 ;                }
                 return $html;
             });;
-        $this->table->appendCell(new ActionsCell('actions'));
+
+
+        //$this->table->appendCell(new ActionsCell('actions'));
+        $actionsCell = ButtonCollection::create('actions')->setAttr('style', 'width: 75px;');
+
+        $actionsCell->append(ActionButton::createBtn('Activate Plugin ', '#', 'fa fa-sign-in'))
+            ->addCss('btn-success btn-xs noblock act')
+            ->setAttr('data-confirm', 'Are you sure you want to install this plugin?')
+            ->addOnShow(function (ButtonCollection $cell, $obj, ActionButton $button) {
+                /* @var $obj \stdClass */
+                $pluginFactory = Config::getInstance()->getPluginFactory();
+                $pluginName = $pluginFactory->cleanPluginName($obj->name);
+                /** @var \Tk\Plugin\Iface $plugin */
+                $plugin = $pluginFactory->getPlugin($pluginName);
+                if ($pluginFactory->isActive($pluginName)) {
+                    $cell->getRow()->addCss('plugin-active');
+                    $button->setVisible(false);
+                } else {
+                    $cell->getRow()->addCss('plugin-inactive');
+                    $button->setUrl(\Tk\Uri::create()->reset()->set('act', $pluginName));
+                }
+            })->setGroup('group');
+
+        $actionsCell->append(ActionButton::createBtn('Delete Plugin Files ', '#', 'fa fa-trash-o'))
+            ->addCss('btn-danger btn-sm noblock del')
+            ->setAttr('data-confirm', 'Are you sure you want to delete this plugin?')
+            ->addOnShow(function (ButtonCollection $cell, $obj, ActionButton $button) {
+                /* @var $obj \stdClass */
+                $pluginFactory = Config::getInstance()->getPluginFactory();
+                $pluginName = $pluginFactory->cleanPluginName($obj->name);
+                /** @var \Tk\Plugin\Iface $plugin */
+                $plugin = $pluginFactory->getPlugin($pluginName);
+                if ($pluginFactory->isActive($pluginName)) {
+                    $cell->getRow()->addCss('plugin-active');
+                    $button->setVisible(false);
+                } else {
+                    $cell->getRow()->addCss('plugin-inactive');
+                    if (!\Tk\Plugin\Factory::isComposer($pluginName, \Bs\Config::getInstance()->getComposer())) {
+                        $button->setUrl(\Tk\Uri::create()->reset()->set('del', $pluginName));
+                    } else {
+                        $button->setAttr('disabled')->addCss('disabled');
+                        $button->setAttr('title', 'Cannot delete a composer plugin. See site administrator.');
+                    }
+                }
+            })->setGroup('group');
+
+        $actionsCell->append(ActionButton::createBtn('Configure Plugin ', '#', 'fa fa-cog'))
+            ->addCss('btn-primary btn-sm noblock setup')
+            ->addOnShow(function (ButtonCollection $cell, $obj, ActionButton $button) {
+                /* @var $obj \stdClass */
+                $pluginFactory = Config::getInstance()->getPluginFactory();
+                $pluginName = $pluginFactory->cleanPluginName($obj->name);
+                /** @var \Tk\Plugin\Iface $plugin */
+                $plugin = $pluginFactory->getPlugin($pluginName);
+                if ($pluginFactory->isActive($pluginName)) {
+                    $cell->getRow()->addCss('plugin-active');
+                    if ($plugin->getSettingsUrl()) {
+                        $button->setUrl($plugin->getSettingsUrl());
+                    } else {
+                        $button->setAttr('title', 'No Configuration Available');
+                        $button->addCss('disabled')->setAttr('diasabled');
+                    }
+                } else {
+                    $cell->getRow()->addCss('plugin-inactive');
+                    $button->setVisible(false);
+                }
+            })->setGroup('group');
+
+        $actionsCell->append(ActionButton::createBtn('Deactivate Plugin ', '#', 'fa fa-power-off'))
+            ->addCss('btn-danger btn-sm noblock deact')
+            ->setAttr('data-confirm', 'Are you sure you want to uninstall this plugin?\\nThis will delete all data relating to the plugin.')
+            ->addOnShow(function (ButtonCollection $cell, $obj, ActionButton $button) {
+                /* @var $obj \stdClass */
+                $pluginFactory = Config::getInstance()->getPluginFactory();
+                $pluginName = $pluginFactory->cleanPluginName($obj->name);
+                /** @var \Tk\Plugin\Iface $plugin */
+                $plugin = $pluginFactory->getPlugin($pluginName);
+                if ($pluginFactory->isActive($pluginName)) {
+                    $cell->getRow()->addCss('plugin-active');
+                    $button->setUrl(\Tk\Uri::create()->reset()->set('deact', $pluginName));
+                } else {
+                    $cell->getRow()->addCss('plugin-inactive');
+                    $button->setVisible(false);
+                }
+            })->setGroup('group');
+
+
+        $this->table->appendCell($actionsCell)->addOnCellHtml(function (\Tk\Table\Cell\Iface $cell, $obj, $html) {
+            /** @var $obj \stdClass */
+            $template = $cell->getTable()->getRenderer()->getTemplate();
+
+            $css = <<<CSS
+#PluginList .plugin-inactive td {
+  opacity: 0.5;
+}
+#PluginList .plugin-inactive td.mActions {
+  opacity: 1;  
+}
+.table > thead > tr > th, 
+.table > tbody > tr > th, 
+.table > tfoot > tr > th, 
+.table > thead > tr > td, 
+.table > tbody > tr > td, 
+.table > tfoot > tr > td {
+  vertical-align: middle;
+}
+
+CSS;
+            $template->appendCss($css);
+            return $html;
+        });
+
         $this->table->appendCell(new \Tk\Table\Cell\Text('name'))->addCss('key')->setOrderProperty('');
         $this->table->appendCell(new \Tk\Table\Cell\Text('access'))->setOrderProperty('');
         $this->table->appendCell(new \Tk\Table\Cell\Text('version'))->setOrderProperty('');
@@ -107,7 +226,6 @@ class PluginManager extends \Bs\Controller\AdminIface
 
     /**
      * @param \Tk\Form $form
-     * @throws \Exception
      */
     public function doUpload($form)
     {
@@ -126,7 +244,12 @@ class PluginManager extends \Bs\Controller\AdminIface
             return;
         }
 
-        $package->saveFile();
+        try {
+            $package->saveFile();
+        } catch (Form\Exception $e) {
+            // TODO:
+            \Tk\Log::error($e->__toString());
+        }
 
         $cmd = '';
         if (\Tk\File::getExtension($dest) == 'zip') {
@@ -142,6 +265,80 @@ class PluginManager extends \Bs\Controller\AdminIface
         // Look for a Plugin.php file and Class maybe????
 
         \Tk\Alert::addSuccess('Plugin successfully uploaded.');
+        \Tk\Uri::create()->reset()->redirect();
+    }
+
+    /**
+     * @param Request $request
+     */
+    protected function doActivatePlugin(Request $request)
+    {
+        $pluginFactory = \Bs\Config::getInstance()->getPluginFactory();
+        $pluginName = strip_tags(trim($request->get('act')));
+        if (!$pluginName) {
+            \Tk\Alert::addWarning('Cannot locate Plugin: ' . $pluginName);
+            return;
+        }
+        try {
+            $pluginFactory->activatePlugin($pluginName);
+            \Tk\Alert::addSuccess('Plugin `' . $pluginName . '` activated successfully');
+        }catch (\Exception $e) {
+            \Tk\Alert::addError('Activate Failed: ' . $e->getMessage());
+            \Tk\Log::warning($e->__toString());
+        }
+        \Tk\Uri::create()->reset()->redirect();
+    }
+
+    /**
+     * @param Request $request
+     */
+    protected function doDeactivatePlugin(Request $request)
+    {
+        $pluginName = strip_tags(trim($request->get('deact')));
+        if (!$pluginName) {
+            \Tk\Alert::addWarning('Cannot locate Plugin: ' . $pluginName);
+            return;
+        }
+        try {
+            \Bs\Config::getInstance()->getPluginFactory()->deactivatePlugin($pluginName);
+            \Tk\Alert::addSuccess('Plugin `' . $pluginName . '` deactivated successfully');
+        }catch (\Exception $e) {
+            \Tk\Alert::addError('Deactivate Failed: ' . $e->getMessage());
+            \Tk\Log::warning($e->__toString());
+        }
+        \Tk\Uri::create()->reset()->redirect();
+    }
+
+    /**
+     * @param Request $request
+     * @throws \Exception
+     */
+    protected function doDeletePlugin(Request $request)
+    {
+        $pluginName = strip_tags(trim($request->get('del')));
+        if (!$pluginName) {
+            \Tk\Alert::addWarning('Cannot locate Plugin: ' . $pluginName);
+            return;
+        }
+        $pluginPath = \Bs\Config::getInstance()->getPluginFactory()->getPluginPath($pluginName);
+
+        if (!is_dir($pluginPath)) {
+            \Tk\Alert::addWarning('Plugin `' . $pluginName . '` path not found');
+            return;
+        }
+
+        // So when we install plugins the archive must be left in the main plugin folder
+        if ((!is_file($pluginPath.'.zip') && !is_file($pluginPath.'.tar.gz') && !is_file($pluginPath.'.tgz'))) {
+            \Tk\Alert::addWarning('Plugin is protected and must be deleted manually.');
+            return;
+        }
+
+        \Tk\File::rmdir($pluginPath);
+        if (is_file($pluginPath.'.zip'))  unlink($pluginPath.'.zip');
+        if (is_file($pluginPath.'.tar.gz'))  unlink($pluginPath.'.tar.gz');
+        if (is_file($pluginPath.'.tgz'))  unlink($pluginPath.'.tgz');
+        \Tk\Alert::addSuccess('Plugin `' . $pluginName . '` deleted successfully');
+
         \Tk\Uri::create()->reset()->redirect();
     }
 
@@ -189,216 +386,3 @@ HTML;
     }
 
 }
-
-
-class ActionsCell extends \Tk\Table\Cell\Text
-{
-
-    /**
-     * OwnerCell constructor.
-     *
-     * @param string $property
-     * @param null $label
-     */
-    public function __construct($property, $label = null)
-    {
-        parent::__construct($property, $label);
-        $this->setOrderProperty('');
-    }
-
-
-    /**
-     * Called when the Table::execute is called
-     */
-    public function execute()
-    {
-        /** @var \Tk\Request $request */
-        $request = \Tk\Config::getInstance()->getRequest();
-
-        if ($request->has('act')) {
-            try {
-                $this->doActivatePlugin($request);
-            } catch (Exception $e) {
-            } catch (\Tk\Plugin\Exception $e) {
-                \Tk\Alert::addError($e->getMessage());
-            }
-        } else if ($request->has('del')) {
-
-            try {
-                $this->doDeletePlugin($request);
-            } catch (Exception $e) {
-            } catch (\Tk\Plugin\Exception $e) {
-            }
-        } else if ($request->has('deact')) {
-            $this->doDeactivatePlugin($request);
-        }
-
-    }
-
-    /**
-     * @param \StdClass $info
-     * @param int|null $rowIdx The current row being rendered (0-n) If null no rowIdx available.
-     * @return string|\Dom\Template
-     * @throws \Tk\Db\Exception
-     * @throws \Tk\Exception
-     * @throws \Tk\Plugin\Exception
-     */
-    public function getCellHtml($info, $rowIdx = null)
-    {
-        $template = $this->__makeTemplate();
-        $pluginFactory = \Bs\Config::getInstance()->getPluginFactory();
-        $pluginName = $pluginFactory->cleanPluginName($info->name);
-
-        if ($pluginFactory->isActive($pluginName)) {
-            $plugin = $pluginFactory->getPlugin($pluginName);
-            $template->setVisible('active');
-            $template->setAttr('deact', 'href', \Tk\Uri::create()->reset()->set('deact', $pluginName));
-            $this->getRow()->addCss('plugin-active');
-
-            if ($plugin->getSettingsUrl()) {
-                $template->setAttr('setup', 'href', $plugin->getSettingsUrl());
-            } else {
-                $template->setAttr('setup', 'title', 'No Configuration Available');
-                $template->addCss('setup', 'disabled');
-            }
-        } else {
-            $template->setVisible('inactive');
-            $template->setAttr('act', 'href', \Tk\Uri::create()->reset()->set('act', $pluginName));
-            $this->getRow()->addCss('plugin-inactive');
-
-            if (!\Tk\Plugin\Factory::isComposer($pluginName, \Tk\Config::getInstance()->getComposer())) {
-                $template->setAttr('del', 'href', \Tk\Uri::create()->reset()->set('del', $pluginName));
-            } else {
-                $template->addCss('del', 'disabled');
-                $template->setAttr('del', 'title', 'Cannot delete a composer plugin. See site administrator.');
-            }
-
-        }
-
-        $js = <<<JS
-jQuery(function ($) {
-    $('.act').click(function (e) {
-        return confirm('Are you sure you want to install this plugin?');
-    });
-    $('.del').click(function (e) {
-        return confirm('Are you sure you want to delete this plugin?');
-    });
-    $('.deact').click(function (e) {
-        return confirm('Are you sure you want to uninstall this plugin?\\nThis will delete all data relating to the plugin.');
-    });
-});
-JS;
-        $template->appendJs($js);
-
-        $css = <<<CSS
-#PluginList .plugin-inactive td {
-  opacity: 0.5;
-}
-#PluginList .plugin-inactive td.mActions {
-  opacity: 1;  
-}
-CSS;
-        $template->appendCss($css);
-
-        return $template;
-    }
-
-
-    /**
-     * makeTemplate
-     *
-     * @return \Dom\Template
-     */
-    public function __makeTemplate()
-    {
-        $html = <<<HTML
-<div class="text-right">
-<a href="#" class="btn btn-success btn-sm noblock act" choice="inactive" var="act" title="Activate Plugin"><i class="fa fa-sign-in"></i></a>
-<a href="#" class="btn btn-danger btn-sm noblock del" choice="inactive" var="del" title="Delete Plugin Files"><i class="fa fa-trash-o"></i></a>
-<a href="#" class="btn btn-primary btn-sm noblock setup" choice="active" var="setup" title="Configure Plugin"><i class="fa fa-cog"></i></a>
-<a href="#" class="btn btn-danger btn-sm noblock deact" choice="active" var="deact" title="Deactivate Plugin"><i class="fa fa-power-off"></i></a>
-</div>
-HTML;
-        return \Dom\Loader::load($html);
-    }
-
-    /**
-     * @param Request $request
-     */
-    protected function doActivatePlugin(Request $request)
-    {
-        $pluginFactory = \Bs\Config::getInstance()->getPluginFactory();
-        $pluginName = strip_tags(trim($request->get('act')));
-        if (!$pluginName) {
-            \Tk\Alert::addWarning('Cannot locate Plugin: ' . $pluginName);
-            return;
-        }
-        try {
-            $pluginFactory->activatePlugin($pluginName);
-            \Tk\Alert::addSuccess('Plugin `' . $pluginName . '` activated successfully');
-        }catch (\Exception $e) {
-            \Tk\Alert::addError('Activate Failed: ' . $e->getMessage());
-            \Tk\Log::warning($e->__toString());
-        }
-        \Tk\Uri::create()->reset()->redirect();
-    }
-
-    /**
-     * @param Request $request
-     */
-    protected function doDeactivatePlugin(Request $request)
-    {
-        $pluginName = strip_tags(trim($request->get('deact')));
-        if (!$pluginName) {
-            \Tk\Alert::addWarning('Cannot locate Plugin: ' . $pluginName);
-            return;
-        }
-        try {
-            \Bs\Config::getInstance()->getPluginFactory()->deactivatePlugin($pluginName);
-            \Tk\Alert::addSuccess('Plugin `' . $pluginName . '` deactivated successfully');
-        }catch (\Exception $e) {
-            \Tk\Alert::addError('Deactivate Failed: ' . $e->getMessage());
-            \Tk\Log::warning($e->__toString());
-        }
-        \Tk\Uri::create()->reset()->redirect();
-    }
-
-    /**
-     * @param Request $request
-     * @throws \Tk\Db\Exception
-     * @throws \Tk\Plugin\Exception
-     */
-    protected function doDeletePlugin(Request $request)
-    {
-        $pluginName = strip_tags(trim($request->get('del')));
-        if (!$pluginName) {
-            \Tk\Alert::addWarning('Cannot locate Plugin: ' . $pluginName);
-            return;
-        }
-        $pluginPath = \Bs\Config::getInstance()->getPluginFactory()->getPluginPath($pluginName);
-
-        if (!is_dir($pluginPath)) {
-            \Tk\Alert::addWarning('Plugin `' . $pluginName . '` path not found');
-            return;
-        }
-
-        // So when we install plugins the archive must be left in the main plugin folder
-        if ((!is_file($pluginPath.'.zip') && !is_file($pluginPath.'.tar.gz') && !is_file($pluginPath.'.tgz'))) {
-            \Tk\Alert::addWarning('Plugin is protected and must be deleted manually.');
-            return;
-        }
-
-        \Tk\File::rmdir($pluginPath);
-        if (is_file($pluginPath.'.zip'))  unlink($pluginPath.'.zip');
-        if (is_file($pluginPath.'.tar.gz'))  unlink($pluginPath.'.tar.gz');
-        if (is_file($pluginPath.'.tgz'))  unlink($pluginPath.'.tgz');
-        \Tk\Alert::addSuccess('Plugin `' . $pluginName . '` deleted successfully');
-
-        \Tk\Uri::create()->reset()->redirect();
-    }
-
-}
-
-
-
-

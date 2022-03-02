@@ -3,6 +3,8 @@ namespace Bs;
 
 
 
+use Bs\Db\User;
+
 /**
  * @author Michael Mifsud <info@tropotek.com>
  * @see http://www.tropotek.com/
@@ -31,8 +33,8 @@ class Uri extends \Tk\Uri
             $home = $user;
         if (!$user)
             $user = Config::getInstance()->getAuthUser();
-        if ($user instanceof \Bs\Db\UserIface)
-            $home = '/' . $user->getRoleType();
+        if ($user instanceof \Bs\Db\UserIface && $user->getType() && !$user->hasType(User::TYPE_GUEST))
+            $home = '/' . $user->getType();
         return new static($home . '/' . trim($spec,'/'));
     }
 
@@ -57,7 +59,7 @@ class Uri extends \Tk\Uri
     public function noCrumb($b = true)
     {
         if ($b)
-            $this->set(\Tk\Crumbs::CRUMB_IGNORE);
+            $this->set(\Tk\Crumbs::CRUMB_IGNORE);       // 'crumb_ignore'
         else
             $this->remove(\Tk\Crumbs::CRUMB_IGNORE);
         return $this;
@@ -98,6 +100,8 @@ class Uri extends \Tk\Uri
      *
      * @param array $roles  Supply a list of available roles to search for
      * @return string
+     * @todo: deprecate this function outta here it should be a helper method in the App/Config if needed???
+     * @deprecated Not sure yet!!!!
      */
     public function getRoleType($roles = array())
     {

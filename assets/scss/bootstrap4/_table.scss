@@ -91,6 +91,7 @@
   }
   td, th {
     white-space: nowrap;
+    line-height: 1em;
   }
 
   .table {
@@ -166,7 +167,7 @@
     line-height: 2em;
     font-size: 0.8em;
   }
-  td.tk-tcb-cell {
+  .tk-tcb-cell {
     text-align: center;
   }
   //td.mActions .btn-toolbar {
@@ -186,6 +187,9 @@
     }
   }
 
+  td .btn-group .btn {
+    margin-right: 0;
+  }
 
 }
 

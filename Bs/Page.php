@@ -2,6 +2,8 @@
 namespace Bs;
 
 
+use Bs\Db\User;
+
 /**
  * @author Michael Mifsud <info@tropotek.com>
  * @link http://www.tropotek.com/
@@ -24,12 +26,13 @@ class Page extends \Tk\Controller\Page
      * Create the default template path using the url role if available (see Config)
      *
      * @return string
+     * @todo Refactor this method to not use the public type name
      */
     protected function makeDefaultTemplatePath()
     {
-        $urlRole = \Bs\Uri::create()->getRoleType($this->getConfig()->getAvailableUserRoleTypes());
-        if (!$urlRole) $urlRole = 'public';
-        return $this->getConfig()->getSitePath() . $this->getConfig()->get('template.'.$urlRole);
+        $urlType = \Bs\Uri::create()->getRoleType($this->getConfig()->getUserTypeList(true));
+        if (!$urlType) $urlType = 'public';     // todo rename this to User::TYPE_GUEST
+        return $this->getConfig()->getSitePath() . $this->getConfig()->get('template.'.$urlType);
     }
 
 

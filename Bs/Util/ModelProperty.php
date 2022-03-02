@@ -165,7 +165,7 @@ TPL;
     {
         $tpl = <<<TPL
     /**
-     * return %s
+     * @return %s
      */
     public function %s%s() : %s
     {
@@ -299,6 +299,13 @@ TPL;
             \$filter->appendWhere('a.%s = %%s AND ', %s);
         }
 TPL;
+        if (preg_match('/Id$/', $this->getName()) && $this->getType() == self::TYPE_INT) {
+            $tpl = <<<TPL
+        if (!empty(\$filter['%s'])) {
+            \$filter->appendWhere('a.%s = %%s AND ', %s);
+        }
+TPL;
+        }
 
         $filterVal = sprintf("\$this->quote(\$filter['%s'])", $this->getName());
         switch ($this->getType()) {

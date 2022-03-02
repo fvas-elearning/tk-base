@@ -1,11 +1,10 @@
 <?php
-namespace Bs\Controller\Admin\User;
+namespace Bs\Controller\User;
 
-use Tk\Request;
+use Bs\Db\Permission;
+use Bs\Db\User;
 use Dom\Template;
-use Tk\Form;
-use Tk\Form\Field;
-use Tk\Form\Event;
+use Tk\Request;
 
 /**
  * @author Michael Mifsud <info@tropotek.com>
@@ -14,13 +13,6 @@ use Tk\Form\Event;
  */
 class Profile extends \Bs\Controller\AdminEditIface
 {
-
-    /**
-     * @var \Bs\Db\User|\Bs\Db\UserIface
-     */
-    protected $user = null;
-
-
     /**
      * @throws \Exception
      */
@@ -31,31 +23,12 @@ class Profile extends \Bs\Controller\AdminEditIface
     }
 
     /**
-     * @return \Bs\Db\User
-     */
-    public function getUser()
-    {
-        return $this->user;
-    }
-
-    /**
-     * @param \Tk\Request $request
+     * @param Request $request
      * @throws \Exception
      */
-    public function init($request)
+    public function doDefault(Request $request)
     {
-        $this->user = $this->getConfig()->getAuthUser();
-    }
-
-    /**
-     * @param \Tk\Request $request
-     * @throws \Exception
-     */
-    public function doDefault(\Tk\Request $request)
-    {
-        $this->init($request);
-
-        $this->setForm(\Bs\Form\User::create()->setModel($this->user));
+        $this->setForm($this->createForm());
 
         if ($this->getForm()->getField('active'))
             $this->getForm()->removeField('active');
@@ -65,12 +38,23 @@ class Profile extends \Bs\Controller\AdminEditIface
             $this->getForm()->getField('uid')->setAttr('disabled')->addCss('form-control disabled')->removeCss('tk-input-lock');
         if ($this->getForm()->getField('email'))
             $this->getForm()->getField('email')->setAttr('disabled')->addCss('form-control disabled')->removeCss('tk-input-lock');
+        if ($this->getForm()->getField('permission')) {
+            if (!$this->getAuthUser()->hasPermission(Permission::MANAGE_SITE) && $this->getAuthUser()->getId() != 1)
+                $this->getForm()->getField('permission')->setAttr('readonly')->setAttr('disabled');
+        }
 
         $this->getForm()->execute();
     }
+    /**
+     * @return \Bs\Form\User
+     */
+    protected function createForm()
+    {
+        return \Bs\Form\User::create()->setModel($this->getConfig()->getAuthUser());
+    }
 
     /**
-     * @return \Dom\Template
+     * @return Template
      * @throws \Exception
      */
     public function show()
@@ -79,8 +63,8 @@ class Profile extends \Bs\Controller\AdminEditIface
 
         // Render the form
         $template->appendTemplate('panel', $this->form->show());
-        if ($this->user->getId())
-            $template->setAttr('panel', 'data-panel-title', $this->user->getName() . ' - [ID ' . $this->user->getId() . ']');
+        if ($this->getConfig()->getAuthUser()->getId())
+            $template->setAttr('panel', 'data-panel-title', $this->getConfig()->getAuthUser()->getName() . ' - [ID ' . $this->getConfig()->getAuthUser()->getId() . ']');
 
         return $template;
     }

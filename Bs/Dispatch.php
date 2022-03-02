@@ -2,6 +2,8 @@
 namespace Bs;
 
 
+use Bs\Listener\InstallHandler;
+use Bs\Listener\StatusHandler;
 use Tk\ConfigTrait;
 use Bs\Listener\MailHandler;
 use Bs\Listener\MaintenanceHandler;
@@ -83,36 +85,34 @@ class Dispatch
      */
     public function init()
     {
-
-        $config = Config::getInstance();
-        $logger = $config->getLog();
-        $request = $config->getRequest();
+        $logger = $this->getConfig()->getLog();
+        $request = $this->getConfig()->getRequest();
         $dispatcher = $this->getDispatcher();
 
         $this->initObjects();
 
         // TODO: Maybe we no longer need the cli check, have a look
-        if (!$config->isCli()) {
+        if (!$this->getConfig()->isCli()) {
 
             $context = new Routing\RequestContext();
-            $matcher = new Routing\Matcher\UrlMatcher($config->getRouteCollection(), $context);
+            $matcher = new Routing\Matcher\UrlMatcher($this->getConfig()->getRouteCollection(), $context);
             $requestStack = new RequestStack();
             $dispatcher->addSubscriber(new HttpKernel\EventListener\RouterListener($matcher, $requestStack));
             //$dispatcher->addSubscriber(new \Tk\Listener\RouteListener($matcher));
 
             $dispatcher->addSubscriber(new PageHandler($dispatcher));
-            $dispatcher->addSubscriber(new ResponseHandler($config->getDomModifier()));
+            $dispatcher->addSubscriber(new ResponseHandler($this->getConfig()->getDomModifier()));
         }
 
+
         // Tk Listeners
-        $dispatcher->addSubscriber(new StartupHandler($logger, $request, $config->getSession()));
+        $dispatcher->addSubscriber(new StartupHandler($logger, $request, $this->getConfig()->getSession()));
 
-
-        if ($config->get('system.email.exception')) {
+        if ($this->getConfig()->get('system.email.exception')) {
             $dispatcher->addSubscriber(new ExceptionEmailListener(
-                $config->getEmailGateway(),
-                $config->get('system.email.exception'),
-                $config->get('site.title')
+                $this->getConfig()->getEmailGateway(),
+                $this->getConfig()->get('system.email.exception'),
+                $this->getConfig()->get('site.title')
             ));
         }
 
@@ -120,8 +120,8 @@ class Dispatch
         $dispatcher->addSubscriber(new LogExceptionListener($logger, true));
 
         // Log not found URI's for future inspections
-        if ($config->getLogPath()) {
-            $notFoundLogPath = dirname($config->getLogPath()) . '/404.log';
+        if ($this->getConfig()->getLogPath()) {
+            $notFoundLogPath = dirname($this->getConfig()->getLogPath()) . '/404.log';
             if (!is_file($notFoundLogPath)) {
                 file_put_contents($notFoundLogPath, '');
             }
@@ -132,27 +132,30 @@ class Dispatch
         }
 
         if (preg_match('|^/ajax/.+|', $request->getTkUri()->getRelativePath())) { // If ajax request
-            $dispatcher->addSubscriber(new JsonExceptionListener($config->isDebug()));
+            $dispatcher->addSubscriber(new JsonExceptionListener($this->getConfig()->isDebug()));
         } else {
-            $dispatcher->addSubscriber(new ExceptionListener($config->isDebug(), 'Bs\Controller\Error'));
+            $dispatcher->addSubscriber(new ExceptionListener($this->getConfig()->isDebug(), 'Bs\Controller\Error'));
         }
 
-        $sh = new ShutdownHandler($logger, $config->getScriptTime());
-        $sh->setPageBytes($config->getDomFilterPageBytes());
+        $sh = new ShutdownHandler($logger, $this->getConfig()->getScriptTime());
+        $sh->setPageBytes($this->getConfig()->getDomFilterPageBytes());
         $dispatcher->addSubscriber($sh);
 
         // App Listeners
+        $dispatcher->addSubscriber($this->getConfig()->getInstallHandler());
         $dispatcher->addSubscriber(new ActionPanelHandler());
         $dispatcher->addSubscriber(new MailHandler());
 
-        if ($config->getAuthHandler())
-            $dispatcher->addSubscriber($config->getAuthHandler());
-        if ($config->getMasqueradeHandler())
-            $dispatcher->addSubscriber($config->getMasqueradeHandler());
-        if ($config->getPageTemplateHandler())
-            $dispatcher->addSubscriber($config->getPageTemplateHandler());
-        if ($config->getCrumbsHandler())
-            $dispatcher->addSubscriber($config->getCrumbsHandler());
+        if ($this->getConfig()->getStatusHandler())
+            $dispatcher->addSubscriber($this->getConfig()->getStatusHandler());
+        if ($this->getConfig()->getAuthHandler())
+            $dispatcher->addSubscriber($this->getConfig()->getAuthHandler());
+        if ($this->getConfig()->getMasqueradeHandler())
+            $dispatcher->addSubscriber($this->getConfig()->getMasqueradeHandler());
+        if ($this->getConfig()->getPageTemplateHandler())
+            $dispatcher->addSubscriber($this->getConfig()->getPageTemplateHandler());
+        if ($this->getConfig()->getCrumbsHandler())
+            $dispatcher->addSubscriber($this->getConfig()->getCrumbsHandler());
 
         $dispatcher->addSubscriber(new MaintenanceHandler());
 

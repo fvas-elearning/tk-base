@@ -29,6 +29,26 @@ class User extends \Bs\TableIface
      */
     protected $editUrl = null;
 
+    protected $targetType = '';
+
+    /**
+     * @return string
+     */
+    public function getTargetType(): string
+    {
+        return $this->targetType;
+    }
+
+    /**
+     * @param string $targetType
+     * @return $this
+     */
+    public function setTargetType(string $targetType)
+    {
+        $this->targetType = $targetType;
+        return $this;
+    }
+
     /**
      * @return \Tk\Uri
      */
@@ -75,15 +95,10 @@ class User extends \Bs\TableIface
             return $obj->getName();
         })->addCss('key')->setUrl($this->getEditUrl());
         $this->appendCell(new \Tk\Table\Cell\Text('username'));
+        $this->appendCell(new \Tk\Table\Cell\Text('uid'))->setLabel('UID');
         $this->appendCell(new \Tk\Table\Cell\Email('email'));
         $this->appendCell(new \Tk\Table\Cell\Text('phone'));
-        $this->appendCell(new \Tk\Table\Cell\Text('roleId'))->addOnPropertyValue(function ($cell, $obj, $value) {
-            /** @var \Bs\Db\User $obj */
-            if ($obj->getRole())
-                $value = $obj->getRole()->getName();
-            return $value;
-        });
-        $this->appendCell(new \Tk\Table\Cell\Text('uid'))->setLabel('UID');
+        //$this->appendCell(new \Tk\Table\Cell\Text('type'));
         $this->appendCell(new \Tk\Table\Cell\Boolean('active'));
         $this->appendCell(new \Tk\Table\Cell\Date('lastLogin'));
         $this->appendCell(new \Tk\Table\Cell\Date('created'));
@@ -91,9 +106,16 @@ class User extends \Bs\TableIface
         // Filters
         $this->appendFilter(new Field\Input('keywords'))->setAttr('placeholder', 'Search');
 
+        $list = ['Yes' => '1', 'No' => '0'];
+        $this->appendFilter(Field\Select::createSelect('active', $list)->setValue('1')->prependOption('-- Active --'));
+
+
         // Actions
         //$this->appendAction(\Tk\Table\Action\Link::createLink('New User', 'fa fa-plus', \Bs\Uri::createHomeUrl('/userEdit.html')));
-        //$this->appendAction(\Tk\Table\Action\ColumnSelect::create()->setUnselected(array('modified', 'created')));
+        $arr = array('modified', 'created');
+        /** @var \Tk\Table\Action\ColumnSelect $cs */
+        $this->appendAction(\Tk\Table\Action\ColumnSelect::create()->setUnselected($arr));
+
         $this->appendAction(\Tk\Table\Action\Delete::create()->setExcludeIdList(array('1')));
         //$this->appendAction(\Tk\Table\Action\Delete::create())->setExcludeIdList(array(1));
         $this->appendAction(\Tk\Table\Action\Csv::create());
@@ -110,7 +132,9 @@ class User extends \Bs\TableIface
      */
     public function findList($filter = array(), $tool = null)
     {
-        if (!$tool) $tool = $this->getTool('a.name');
+        if (!$this->getTargetType() && !empty($filter['type']))
+            $this->setTargetType($filter['type']);
+        if (!$tool) $tool = $this->getTool('a.name_first');
         $filter = array_merge($this->getFilterValues(), $filter);
         $list = $this->getConfig()->getUserMapper()->findFiltered($filter, $tool);
         return $list;

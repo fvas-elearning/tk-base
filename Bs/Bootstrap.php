@@ -14,6 +14,7 @@ class Bootstrap
 {
     /**
      * @return \Bs\Config
+     * @throws \Exception
      */
     public static function execute()
     {
@@ -73,6 +74,15 @@ class Bootstrap
             error_reporting(0);
         } else {
             \Dom\Template::$enableTracer = true;
+
+            // Allow self-signed certs in file_get_contents in debug mode only
+            $context = array(
+                "ssl" => array(
+                    "verify_peer" => false,
+                    "verify_peer_name" => false,
+                ),
+            );
+            stream_context_set_default($context);
         }
         // Init framework error handler
         \Tk\ErrorHandler::getInstance($config->getLog());

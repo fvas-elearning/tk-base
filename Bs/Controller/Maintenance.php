@@ -61,7 +61,6 @@ class Maintenance extends \Bs\Controller\Iface
     {
         if (!$this->page) {
             $this->page = $this->getConfig()->getPage($this->getConfig()->getSitePath() . $this->getConfig()->get('template.maintenance'));
-            $this->page->setController($this);
         }
         return parent::getPage();
     }

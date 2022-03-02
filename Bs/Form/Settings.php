@@ -31,11 +31,9 @@ class Settings extends \Bs\FormIface
         $tab = 'Site';
         $this->appendField(new Field\Input('site.title'))->setTabGroup($tab)->setLabel('Site Title')->setRequired(true);
         $this->appendField(new Field\Input('site.short.title'))->setTabGroup($tab)->setLabel('Site Short Title')->setRequired(true);
-        $this->appendField(new Field\Input('site.email'))->setTabGroup($tab)->setLabel('Site Email')->setRequired(true);
-        $this->appendField(new Field\Textarea('site.email.sig'))->setTabGroup($tab)->setLabel('Email Signature')
-            ->setNotes('Set the email signature to appear at the foot of all system emails.')->addCss('mce-min');
+        $this->appendField(new Field\Input('site.email'))->setTabGroup($tab)->setLabel('Site Email')->setRequired(true)
+            ->setNotes('The default email address the system will use to send contact requests and system messages.');
 
-        $tab = 'Setup';
         $this->appendField(new Field\Input('google.map.apikey'))->setTabGroup($tab)->setLabel('Google API Key')
             ->setNotes('<a href="https://cloud.google.com/maps-platform/" target="_blank">Get Google Maps Api Key</a> And be sure to enable `Maps Javascript API`, `Maps Embed API` and `Places API for Web` for this site.');
         $this->appendField(new Field\Checkbox('site.client.registration'))->setTabGroup($tab)->setLabel('Client Registration')
@@ -43,15 +41,18 @@ class Settings extends \Bs\FormIface
         $this->appendField(new Field\Checkbox('site.client.activation'))->setTabGroup($tab)->setLabel('Account Activation')
             ->setCheckboxLabel('Enable automatic activation of registered user accounts.')->setNotes('If not checked you must manually activate new user accounts.');
 
-        $tab = 'Global';
+        $tab = 'Email';
+        $this->appendField(new Field\Textarea('site.email.sig'))->setTabGroup($tab)->setLabel('Email Signature')
+            ->setNotes('Set the email signature to appear at the foot of all system emails.')->addCss('mce-min');
+
+        $tab = 'Metadata';
+        $this->appendField(new Field\Input('site.meta.keywords'))->setTabGroup($tab)->setLabel('Metadata Keywords');
+        $this->appendField(new Field\Input('site.meta.description'))->setTabGroup($tab)->setLabel('Metadata Description');
+
         $this->appendField(new Field\Textarea('site.global.js'))->setAttr('id', 'site-global-js')->setTabGroup($tab)->setLabel('Custom JS')
             ->setNotes('You can omit the &lt;script&gt; tags here')->addCss('code')->setAttr('data-mode', 'javascript');
         $this->appendField(new Field\Textarea('site.global.css'))->setAttr('id', 'site-global-css')->setTabGroup($tab)->setLabel('Custom CSS Styles')
             ->setNotes('You can omit the &lt;style&gt; tags here')->addCss('code')->setAttr('data-mode', 'css');
-
-        $tab = 'SEO';
-        $this->appendField(new Field\Input('site.meta.keywords'))->setTabGroup($tab)->setLabel('SEO Keywords');
-        $this->appendField(new Field\Input('site.meta.description'))->setTabGroup($tab)->setLabel('SEO Description');
 
         $tab = 'Maintenance';
         $this->appendField(new Field\Checkbox('site.maintenance.enabled'))->addCss('check-enable')->setLabel('')->setTabGroup($tab)->setCheckboxLabel('Maintenance Mode Enabled');
@@ -91,7 +92,7 @@ class Settings extends \Bs\FormIface
             $form->addFieldError('site.email', 'Please enter a valid email address');
         }
 
-        if ($this->form->hasErrors()) {
+        if ($form->hasErrors()) {
             return;
         }
 

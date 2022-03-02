@@ -257,7 +257,8 @@ class ModelGenerator
                 $mp->get('Type') != 'text' &&
                 $mp->getType() != ModelProperty::TYPE_DATE &&
                 $mp->getType() != ModelProperty::TYPE_BOOL &&
-                $mp->getName() != 'id'
+                $mp->getName() != 'id' &&
+                $mp->getName() != 'orderBy'
             )
                 $data['validators'] .= "\n" . $mp->getValidation() . "\n";
         }
@@ -334,14 +335,22 @@ STR;
         );
         foreach ($this->tableInfo as $col) {
             $mp = ModelProperty::create($col);
+
+            $exclude = array('del');
+            if (!in_array($mp->getName(), $exclude)) {
+                $data['column-maps'] .= $mp->getColumnMap() . "\n";
+            }
+
             $exclude = array('del', 'orderBy', 'modified', 'created');
-            if (in_array($mp->getName(), $exclude)) continue;
-            $data['column-maps'] .= $mp->getColumnMap() . "\n";
-            $data['form-maps'] .= $mp->getFormMap() . "\n";
-            if ($mp->getType() == ModelProperty::TYPE_DATE || $mp->get('Type') == 'text') continue;
-            $data['filter-queries'] .= $mp->getFilterQuery() . "\n";
-            if ($this->getTable() != $this->tableFromClass()) {
-                $data['set-table'] = "\n" . sprintf("            \$this->setTable('%s');", $this->getTable()) . "\n";
+            if (!in_array($mp->getName(), $exclude)) {
+                $data['form-maps'] .= $mp->getFormMap() . "\n";
+            }
+
+            if ($mp->getType() != ModelProperty::TYPE_DATE && $mp->get('Type') != 'text') {
+                $data['filter-queries'] .= $mp->getFilterQuery() . "\n";
+                if ($this->getTable() != $this->tableFromClass()) {
+                    $data['set-table'] = "\n" . sprintf("            \$this->setTable('%s');", $this->getTable()) . "\n";
+                }
             }
         }
         return $data;

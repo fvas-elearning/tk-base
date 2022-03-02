@@ -1,7 +1,348 @@
 #CHANGELOG#
 
-Ver 3.2.54 [2020-11-23]:
+Ver 3.2.138 [2022-02-18]:
 -------------------------------
+
+
+Ver 3.2.136 [2022-01-27]:
+-------------------------------
+
+
+Ver 3.2.134 [2022-01-17]:
+-------------------------------
+
+
+Ver 3.2.132 [2021-12-22]:
+-------------------------------
+
+
+Ver 3.2.130 [2021-12-21]:
+-------------------------------
+  - Merge branch '3.2' of ssh://github.com/tropotek/tk-base into 3.2
+
+
+Ver 3.2.128 [2021-12-21]:
+-------------------------------
+
+
+Ver 3.2.126 [2021-12-09]:
+-------------------------------
+
+
+Ver 3.2.124 [2021-12-09]:
+-------------------------------
+
+
+Ver 3.2.122 [2021-12-09]:
+-------------------------------
+  - Merge branch '3.2' of ssh://github.com/tropotek/tk-base into 3.2
+
+
+Ver 3.2.120 [2021-12-07]:
+-------------------------------
+
+
+Ver 3.2.118 [2021-11-26]:
+-------------------------------
+  - Tagging and releasing branch `3.2` with version `3.2.116`.
+
+
+<<<<<<< HEAD
+Ver 3.2.116 [2021-11-26]:
+=======
+Ver 3.2.116 [2021-11-25]:
+>>>>>>> af938d7a41e560e9a17c95391c72e6a6f061257d
+-------------------------------
+
+
+Ver 3.2.114 [2021-11-24]:
+-------------------------------
+  - Merge branch '3.2' of ssh://github.com/tropotek/tk-base into 3.2
+
+
+Ver 3.2.112 [2021-11-18]:
+-------------------------------
+  - Merge branch '3.2' of ssh://github.com/tropotek/tk-base into 3.2
+
+
+Ver 3.2.110 [2021-11-15]:
+-------------------------------
+
+
+Ver 3.2.108 [2021-11-05]:
+-------------------------------
+  - Fixed EntryNotice event system
+
+
+Ver 3.2.106 [2021-10-05]:
+-------------------------------
+
+
+Ver 3.2.104 [2021-09-01]:
+-------------------------------
+
+
+Ver 3.2.102 [2021-08-16]:
+-------------------------------
+
+
+Ver 3.2.100 [2021-07-23]:
+-------------------------------
+
+
+Ver 3.2.98 [2021-07-19]:
+-------------------------------
+
+
+Ver 3.2.96 [2021-07-15]:
+-------------------------------
+
+
+Ver 3.2.94 [2021-06-30]:
+-------------------------------
+  - Merge branch '3.2' of ssh://github.com/tropotek/tk-base into 3.2
+
+
+Ver 3.2.92 [2021-06-15]:
+-------------------------------
+
+
+Ver 3.2.90 [2021-06-07]:
+-------------------------------
+
+
+Ver 3.2.88 [2021-05-25]:
+-------------------------------
+  - Added redirect to requested URL after logging in
+
+
+Ver 3.2.86 [2021-04-27]:
+-------------------------------
+
+
+Ver 3.2.84 [2021-04-27]:
+-------------------------------
+
+
+Ver 3.2.82 [2021-04-23]:
+-------------------------------
+  - Merge branch '3.2' of ssh://github.com/tropotek/tk-base into 3.2
+
+
+Ver 3.2.80 [2021-04-20]:
+-------------------------------
+
+
+Ver 3.2.78 [2021-04-12]:
+-------------------------------
+
+
+Ver 3.2.76 [2021-03-03]:
+-------------------------------
+
+
+Ver 3.2.74 [2021-03-02]:
+-------------------------------
+
+
+Ver 3.2.72 [2021-02-22]:
+-------------------------------
+
+
+Ver 3.2.70 [2021-02-19]:
+-------------------------------
+
+
+Ver 3.2.68 [2021-02-18]:
+-------------------------------
+  - NAILED IT!!! New DomRenderer object for the Tk\Form way cleaner code
+
+
+Ver 3.2.66 [2021-02-11]:
+-------------------------------
+  - Merge branch '3.2' of ssh://github.com/tropotek/tk-base into 3.2
+
+
+Ver 3.2.64 [2021-01-29]:
+-------------------------------
+
+
+Ver 3.2.62 [2021-01-22]:
+-------------------------------
+
+
+Ver 3.2.60 [2021-01-19]:
+-------------------------------
+  - :Merge branch '3.2' of ssh://github.com/tropotek/tk-base into 3.2
+
+
+Ver 3.2.58 [2021-01-12]:
+-------------------------------
+
+
+Ver 3.2.56 [2020-11-23]:
+-------------------------------
+  - Tagging and releasing branch `3.2` with version `3.2.52`.
+  - Tagging and releasing branch `3.2` with version `3.2.50`.
+  - Tagging and releasing branch `3.2` with version `3.2.48`.
+  - Tagging and releasing branch `3.2` with version `3.2.46`.
+  - Tagging and releasing branch `3.2` with version `3.2.44`.
+  - Tagging and releasing branch `3.2` with version `3.2.42`.
+  - Tagging and releasing branch `3.2` with version `3.2.40`.
+  - Tagging and releasing branch `3.2` with version `3.2.38`.
+  - Tagging and releasing branch `3.2` with version `3.2.36`.
+  - Tagging and releasing branch `3.2` with version `3.2.34`.
+  - Tagging and releasing branch `3.2` with version `3.2.32`.
+  - Tagging and releasing branch `3.2` with version `3.2.30`.
+  - Removed tkAge jQuery plugin as it interfears with dualListBox plugin
+  - Tagging and releasing branch `3.2` with version `3.2.28`.
+  - Added media to report
+  - Tagging and releasing branch `3.2` with version `3.2.26`.
+  - Tagging and releasing branch `3.2` with version `3.2.24`.
+  - Added new age addon to date input
+  - updated PathCase field locations
+  - Added colour field to PathCase
+  - Updated Weight Field to Path CAse
+  - Tagging and releasing branch `3.2` with version `3.2.22`.
+  - fixed a few anying error emails and DB bugs
+  - Tagging and releasing branch `3.2` with version `3.2.20`.
+  - Tagging and releasing branch `3.2` with version `3.2.18`.
+  - Fixed Masquerading Lti issue
+  - Tagging and releasing branch `3.2` with version `3.2.16`.
+  - Tagging and releasing branch `3.2` with version `3.2.14`.
+  - Tagging and releasing branch `3.2` with version `3.2.12`.
+  - Merge branch '3.2' of ssh://github.com/tropotek/tk-base into 3.2
+  - Tagging and releasing branch `3.2` with version `3.2.10`.
+  - Tagging and releasing branch `3.2` with version `3.2.8`.
+  - Tagging and releasing branch `3.2` with version `3.2.6`.
+  - Tagging and releasing branch `3.2` with version `3.2.4`.
+  - Tagging and releasing branch `3.2` with version `3.2.2`.
+  - Tagging and releasing branch `3.2` with version `3.2.0`.
+  - Added LTI 1.3 plugin
+
+
+Ver 3.2.52 [2020-11-18]:
+-------------------------------
+
+
+Ver 3.2.50 [2020-11-16]:
+-------------------------------
+
+
+Ver 3.2.48 [2020-11-12]:
+-------------------------------
+
+
+Ver 3.2.46 [2020-11-12]:
+-------------------------------
+
+
+Ver 3.2.44 [2020-11-11]:
+-------------------------------
+
+
+Ver 3.2.42 [2020-11-11]:
+-------------------------------
+
+
+Ver 3.2.40 [2020-11-09]:
+-------------------------------
+
+
+Ver 3.2.38 [2020-11-03]:
+-------------------------------
+
+
+Ver 3.2.36 [2020-10-26]:
+-------------------------------
+
+
+Ver 3.2.34 [2020-10-22]:
+-------------------------------
+
+
+Ver 3.2.32 [2020-10-22]:
+-------------------------------
+
+
+Ver 3.2.30 [2020-10-21]:
+-------------------------------
+  - Removed tkAge jQuery plugin as it interfears with dualListBox plugin
+
+
+Ver 3.2.28 [2020-10-21]:
+-------------------------------
+  - Added media to report
+
+
+Ver 3.2.26 [2020-10-20]:
+-------------------------------
+
+
+Ver 3.2.24 [2020-10-19]:
+-------------------------------
+  - Added new age addon to date input
+  - updated PathCase field locations
+  - Added colour field to PathCase
+  - Updated Weight Field to Path CAse
+
+
+Ver 3.2.22 [2020-09-14]:
+-------------------------------
+  - fixed a few anying error emails and DB bugs
+
+
+Ver 3.2.20 [2020-09-10]:
+-------------------------------
+
+
+Ver 3.2.18 [2020-06-02]:
+-------------------------------
+  - Fixed Masquerading Lti issue
+
+
+Ver 3.2.16 [2020-05-29]:
+-------------------------------
+
+
+Ver 3.2.14 [2020-05-23]:
+-------------------------------
+
+
+Ver 3.2.14 [2020-05-23]:
+-------------------------------
+
+
+Ver 3.2.12 [2020-03-31]:
+-------------------------------
+  - Merge branch '3.2' of ssh://github.com/tropotek/tk-base into 3.2
+
+
+Ver 3.2.10 [2020-03-24]:
+-------------------------------
+  - Merge branch '3.2' of ssh://github.com/tropotek/tk-base into 3.2
+
+
+Ver 3.2.8 [2020-03-23]:
+-------------------------------
+
+
+Ver 3.2.6 [2020-03-13]:
+-------------------------------
+
+
+Ver 3.2.4 [2020-03-12]:
+-------------------------------
+
+
+Ver 3.2.2 [2020-03-11]:
+-------------------------------
+
+
+Ver 3.2.0 [2020-03-11]:
+-------------------------------
+  - Merge branch '3.2' of ssh://github.com/tropotek/tk-base into 3.2
+  - Added LTI 1.3 plugin
 
 
 Ver 3.0.96 [2020-02-14]:

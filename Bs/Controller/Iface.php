@@ -2,6 +2,8 @@
 namespace Bs\Controller;
 
 
+use Tk\Controller\Page;
+
 /**
  * @author Michael Mifsud <info@tropotek.com>
  * @link http://www.tropotek.com/
@@ -12,17 +14,14 @@ abstract class Iface extends \Tk\Controller\Iface
 
     /**
      * Get a new instance of the page to display the content in.
-     *
      * NOTE: This is the default, override to load your own page objects
      *
-     * @return \Tk\Controller\Page|\Bs\Page
-     * @todo: this is very confusing and hard to trace,  we need a better method to instantiate a page object
+     * @return Page|\Bs\Page
      */
     public function getPage()
     {
         if (!$this->page) {
             $this->page = $this->getConfig()->getPage();
-            $this->page->setController($this);
         }
         return parent::getPage();
     }

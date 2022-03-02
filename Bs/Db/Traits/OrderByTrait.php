@@ -22,7 +22,7 @@ trait OrderByTrait
      * @param int $orderBy
      * @return $this
      */
-    protected function setOrderBy($orderBy)
+    public function setOrderBy($orderBy)
     {
         $this->orderBy = $orderBy;
         return $this;

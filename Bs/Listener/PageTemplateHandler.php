@@ -1,6 +1,7 @@
 <?php
 namespace Bs\Listener;
 
+use Bs\Db\User;
 use Tk\ConfigTrait;
 use Tk\Event\Subscriber;
 
@@ -74,8 +75,8 @@ class PageTemplateHandler implements Subscriber
         $dataUrl = $this->getConfig()->getDataUrl();
         $templateUrl = $this->getConfig()->getTemplateUrl();
         $roleType = '';
-        if ($this->getConfig()->getAuthUser()) {
-            $roleType = $this->getConfig()->getAuthUser()->getRoleType();
+        if ($this->getConfig()->getAuthUser() && $this->getConfig()->getAuthUser()->getType() != User::TYPE_GUEST) {
+            $roleType = $this->getConfig()->getAuthUser()->getType();
         }
         $fw = $this->getConfig()->get('css.framework');
         $bs4 = $this->isBootstrap4() ? 'true' : 'false';
@@ -130,17 +131,18 @@ JS;
             $template->setVisible($config->get('template.var.page.alerts'));
         }
 
-        if ($this->getConfig()->getAuthUser()) {
-            $template->insertText($config->get('template.var.page.user-name'), $this->getConfig()->getAuthUser()->name);
-            $template->insertText($config->get('template.var.page.username'), $this->getConfig()->getAuthUser()->username);
-            $i = strpos($this->getConfig()->getAuthUser()->username, '@');
+        $template->setAttr($config->get('template.var.page.user-url'), 'href', $this->getConfig()->getUserHomeUrl());
+        if ($this->hasAuthUser()) {
+            $template->insertText($config->get('template.var.page.user-name'), $this->getConfig()->getAuthUser()->getName());
+            $template->insertText($config->get('template.var.page.username'), $this->getConfig()->getAuthUser()->getUsername());
+            $i = strpos($this->getConfig()->getAuthUser()->getUsername(), '@');
             if ($i > 0) {
-                $template->insertText($config->get('template.var.page.username'), substr($this->getConfig()->getAuthUser()->username, 0, $i));
+                $template->insertText($config->get('template.var.page.username'), substr($this->getConfig()->getAuthUser()->getUsername(), 0, $i));
             }
 
             $template->setAttr($config->get('template.var.page.user-url'), 'href', $this->getConfig()->getUserHomeUrl());
             $template->setVisible($config->get('template.var.page.logout'));
-//            $template->addCss($template->getBodyElement(), $this->getConfig()->getAuthUser()->getRoleType());
+//            $template->addCss($template->getBodyElement(), $this->getConfig()->getAuthUser()->getType());
         } else {
             $template->setVisible($config->get('template.var.page.login'));
         }

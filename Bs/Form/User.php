@@ -1,6 +1,7 @@
 <?php
 namespace Bs\Form;
 
+use Bs\Db\Permission;
 use Tk\Form\Field;
 use Tk\Form\Event;
 use Tk\Form;
@@ -13,7 +14,7 @@ use Tk\Form;
  *   $formTemplate = $form->getRenderer()->show();
  *   $template->appendTemplate('form', $formTemplate);
  * </code>
- * 
+ *
  * @author Mick Mifsud
  * @created 2018-11-19
  * @link http://tropotek.com.au/
@@ -25,7 +26,7 @@ class User extends \Bs\FormIface
      * Setup the controller to work with users of this role
      * @var string
      */
-    protected $targetRole = '';
+    protected $targetType = '';
 
     /**
      * @throws \Exception
@@ -33,27 +34,43 @@ class User extends \Bs\FormIface
     public function init()
     {
         $layout = $this->getRenderer()->getLayout();
+        $layout->removeRow('title', 'col-1');
+        $layout->removeRow('nameFirst', 'col');
         $layout->removeRow('nameLast', 'col');
         $layout->removeRow('phone', 'col');
+        $layout->removeRow('position', 'col');
 
 
         $tab = 'Details';
-        $list = $this->getConfig()->getRoleMapper()->findFiltered(array());
-        $this->appendField(new Field\Select('roleId', $list))->prependOption('-- Select --', '')->setTabGroup($tab)->setRequired(true);
+//        if ($this->getAuthUser()->isAdmin()) {
+//            $list = $this->getConfig()->getUserTypeList();
+//            $this->appendField(new Field\Select('type', $list))->prependOption('-- Select --', '')->setTabGroup($tab)->setRequired(true);
+//        }
+
+        $this->appendField(Field\Select::createSelect('title', \Bs\Db\User::getTitleList($this->getUser()->getTitle()))->prependOption('-- Select --') )->setTabGroup($tab);
         $this->appendField(new Field\Input('nameFirst'))->setLabel('First Name')->setTabGroup($tab)->setRequired(true);
         $this->appendField(new Field\Input('nameLast'))->setLabel('Last Name(s)')->setTabGroup($tab)->setRequired(true);
-        $this->appendField(new Field\Input('username'))->addCss('tk-input-lock')->setTabGroup($tab)->setRequired(true);
-        $this->appendField(new Field\Input('email'))->addCss('tk-input-lock')->setTabGroup($tab)->setRequired(true);
+        $f = $this->appendField(new Field\Input('username'))->setTabGroup($tab)->setRequired(true);
+        if ($this->getUser()->getId())
+            $f->addCss('tk-input-lock');
+        $f = $this->appendField(new Field\Input('email'))->setTabGroup($tab)->setRequired(true);
+        if ($this->getUser()->getId())
+            $f->addCss('tk-input-lock');
         $this->appendField(new Field\Input('phone'))->setTabGroup($tab)->setNotes('Enter a phone number that you can be contacted on directly.');
-        $this->appendField(new Field\Checkbox('active'))->setTabGroup($tab);
+        $this->appendField(new Field\Input('credentials'))->setTabGroup($tab)->setNotes('Enter your professional credentials. EG: BVSc, MPhil, MANZCVSc, Dip ACV');
+        $this->appendField(new Field\Input('position'))->setTabGroup($tab)->setNotes('Enter your work position/Department. EG: Senior Lecturer');
+        $this->appendField(Field\Checkbox::create('active')->setCheckboxLabel('Enable User Login'))->setTabGroup($tab);
+
 
         $tab = 'Password';
+
         $this->setAttr('autocomplete', 'off');
         $f = $this->appendField(new Field\Password('newPassword'))->setAttr('placeholder', 'Click to edit')
             ->setAttr('readonly')->setAttr('onfocus', "this.removeAttribute('readonly');this.removeAttribute('placeholder');")
             ->setTabGroup($tab);
         if (!$this->getUser()->getId())
             $f->setRequired(true);
+
         $f = $this->appendField(new Field\Password('confPassword'))->setAttr('placeholder', 'Click to edit')
             ->setAttr('readonly')->setAttr('onfocus', "this.removeAttribute('readonly');this.removeAttribute('placeholder');")
             ->setNotes('Change this users password.')->setTabGroup($tab);
@@ -64,9 +81,16 @@ class User extends \Bs\FormIface
             $this->remove('active');
         }
 
+        $tab = 'Permissions';
+        $list = $this->getConfig()->getPermission()->getAvailablePermissionList($this->getUser()->getType());
+        if (count($list)) {
+            $this->appendField(new Field\CheckboxGroup('permission', $list))->setLabel('Permission List')->setTabGroup($tab);
+        }
+
         $this->appendField(new Event\Submit('update', array($this, 'doSubmit')));
         $this->appendField(new Event\Submit('save', array($this, 'doSubmit')));
         $this->appendField(new Event\Link('cancel', $this->getBackUrl()));
+
     }
 
     /**
@@ -76,6 +100,9 @@ class User extends \Bs\FormIface
     public function execute($request = null)
     {
         $this->load($this->getConfig()->getUserMapper()->unmapForm($this->getUser()));
+        if ($this->getUser()->getId() && $this->getField('permission')) {
+            $this->load(array('permission' => $this->getUser()->getPermissions()));
+        }
         parent::execute($request);
     }
 
@@ -104,8 +131,8 @@ class User extends \Bs\FormIface
         }
 
         // Just a small check to ensure the user down not change their own role
-        if ($this->getUser()->getId() == $this->getConfig()->getAuthUser()->getId() && $this->getUser()->getRoleType() != $this->getConfig()->getAuthUser()->getRoleType()) {
-            $form->addError('You cannot change your own role information.');
+        if ($this->getUser()->getId() == $this->getConfig()->getAuthUser()->getId() && $this->getUser()->getType() != $this->getConfig()->getAuthUser()->getType()) {
+            $form->addError('You cannot change your own user type information.');
         }
         if ($this->getUser()->getId() == $this->getConfig()->getAuthUser()->getId() && !$this->getUser()->isActive()) {
             $form->addError('You cannot change your own active status.');
@@ -120,14 +147,20 @@ class User extends \Bs\FormIface
             $this->getUser()->setNewPassword($form->getFieldValue('newPassword'));
         }
 
-        // Keep the admin account available and working. (hack for basic sites)
-        if ($this->getUser()->getId() == 1) {
-            $this->getUser()->active = true;
-            $this->getUser()->username = 'admin';
-            $this->getUser()->roleId = \Bs\Db\Role::DEFAULT_TYPE_ADMIN;
+        $this->getUser()->save();
+
+        if ($form->getField('permission')) {
+            $this->getUser()->removePermission();
+            $this->getUser()->addPermission($form->getFieldValue('permission'));
         }
 
-        $this->getUser()->save();
+        // Keep the admin account available and working. (hack for basic sites)
+        if ($this->getUser()->getId() == 1 && $this->getUser()->getUsername() == 'admin') {
+            $this->getUser()->setActive(true);
+            $this->getUser()->setUsername('admin');
+            $this->getUser()->setType(\Bs\Db\User::TYPE_ADMIN);
+        }
+
 
         \Tk\Alert::addSuccess('Record saved!');
         $event->setRedirect($this->getBackUrl());
@@ -156,19 +189,19 @@ class User extends \Bs\FormIface
     /**
      * @return string
      */
-    public function getTargetRole()
+    public function getTargetType()
     {
-        return $this->targetRole;
+        return $this->targetType;
     }
 
     /**
-     * @param string $targetRole
+     * @param string $targetType
      * @return User
      */
-    public function setTargetRole($targetRole)
+    public function setTargetType($targetType)
     {
-        $this->targetRole = $targetRole;
+        $this->targetType = $targetType;
         return $this;
     }
-    
+
 }

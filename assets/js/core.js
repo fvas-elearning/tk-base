@@ -77,7 +77,8 @@ var project_core = function () {
 
 
   /**
-   * Dual select list box renderer
+   * Add an edit lock button to text fields
+   * So the user has to click the unlock button b4 editing
    */
   var initTkInputLock = function () {
     if ($.fn.tkInputLock === undefined) {
@@ -92,18 +93,28 @@ var project_core = function () {
     $('form').on('init', document, init).each(init);
   };
 
+
   /**
    * Dual select list box renderer
    */
   var initDualListBox = function () {
+    //console.warn('TK Plugin DualListBox has been disabled due to errors.');
     if ($.fn.DualListBox === undefined) {
-      console.warn('Plugin not loaded: DualListBox');
-      return;
+      //console.warn('Plugin not loaded: DualListBox');
+      //return;
     }
 
     function init() {
       var form = $(this);
-      form.find('select.tk-dualSelect, select.tk-dual-select').DualListBox();
+      // TODO: EMS causes an error here (check other sites with this plugin, time to find another option)??????
+      //form.find('select.tk-dualSelect, select.tk-dual-select').DualListBox();
+      //form.find('select.tk-dual-select').DualListBox();
+
+      form.find('select.tk-dualSelect, select.tk-dual-select').each(function () {
+        var el = $(this);
+        el.attr('disabled', 'disabled')
+          .after('<p><b>NOTICE: This has been disabled as we are working on a fix for this element.</b></p>');
+      });
     }
     $('form').on('init', document, init).each(init);
   };
@@ -341,9 +352,14 @@ var project_core = function () {
           var url, reg, info;
           // URL normalization
           url = fm.convAbsUrl(file.url);
+          //url = file.url;
           // Remove domain name from the path
           url = url.replace(url.split('/').slice(0, 3).join('/'), '');
-          //console.log(url.replace(url.split('/').slice(0, 3).join('/'), ''));
+
+
+          //console.log(arguments);
+          // data-no-rel="data-no-rel"
+
 
           // Make file info
           info = file.name;
@@ -386,6 +402,13 @@ var project_core = function () {
       image_advtab: true,
       content_style: 'body {padding: 10px}',
       convert_urls: false,
+      baseUrl: config.siteUrl,
+      // Trying to fix past wod text issue?????? This does not seem o make any difference, need to find another editor I think
+      ////paste_as_text: true,
+      //paste_auto_cleanup_on_paste : true,
+      //paste_word_valid_elements: "b,strong,i,em,h1,h2,u,p,ol,ul,li,a[href],span,color,font-size,font-color,font-family,mark",
+      //paste_retain_style_properties: "all",
+
       browser_spellcheck: true,
       file_picker_callback: _elFinderPickerCallback,
       setup: function (ed) {
@@ -396,11 +419,11 @@ var project_core = function () {
     };
 
     function init() {
-
       var form = $(this);
       form.find('textarea.mce, textarea.mce-med, textarea.mce-min, textarea.mce-micro').each(function () {
         var el = $(this);
         var cfg = {statusbar: false};
+
         //var readonly = 0;
         if (el.is('[readonly]') || el.is('[disabled]')) {
           cfg.readonly = 1;
@@ -409,27 +432,30 @@ var project_core = function () {
           cfg.theme_advanced_disable = true;
         }
         var opts = $.extend({}, mceOpts, cfg, extOpts);
+        if (el.hasClass('mce-no-fm')) {   // disable the elFinder file manager
+          opts.file_picker_callback = null;
+        }
         if (el.hasClass('mce-micro')) {
-          opts = $.extend({}, opts, {
+          opts = $.extend({}, {
             plugins: ['lists advlist autolink link image media code'],
             toolbar1: 'bold italic underline strikethrough | alignleft aligncenter alignright ' +
               '| link unlink | removeformat code',
             toolbar2: '',
             toolbar3: '',
             menubar: false
-          });
+          }, opts);
           opts.height = el.data('height') ? el.data('height') : 200;
         } else if (el.hasClass('mce-min')) {
-          opts = $.extend({}, opts, {
+          opts = $.extend({}, {
             plugins: ['lists advlist autolink link image media code preview fullscreen'],
             toolbar1: 'bold italic underline strikethrough | alignleft aligncenter alignright ' +
               '| bullist numlist | link unlink image media | removeformat fullscreen preview code',
             toolbar2: '',
             toolbar3: ''
-          });
+          }, opts);
           opts.height = el.data('height') ? el.data('height') : 200;
         } else if (el.hasClass('mce-med')) {
-          opts = $.extend({}, opts, {
+          opts = $.extend({}, {
             //plugins: ['advlist autolink link image lists charmap hr anchor code textcolor colorpicker textpattern'],
             plugins: [
               'advlist autolink link image lists charmap print preview hr anchor',
@@ -441,7 +467,7 @@ var project_core = function () {
             toolbar2: '',
             toolbar3: '',
             menubar: true
-          });
+          }, opts);
           opts.height = el.data('height') ? el.data('height') : 400;
           opts.statusbar = true;
         } else {
@@ -504,7 +530,8 @@ var project_core = function () {
    */
   var initDataConfirm = function () {
     if ($.fn.bsConfirm === undefined) {
-      $('body').on('click', '[data-confirm]', function () {
+      $('[data-confirm]').on('click', document, function () {
+      //$('body').on('click', '[data-confirm]', function () {
         return confirm($('<p>' + $(this).data('confirm') + '</p>').text());
       });
     } else {
@@ -596,6 +623,7 @@ var project_core = function () {
       }
       var tpl = $(settings.panelTemplate);
       tpl.addClass(element.attr('class'));
+      element.attr('class', 'tk-panel-org');
 
       tpl.hide();
       if (settings.panelIcon !== undefined) {
@@ -607,6 +635,7 @@ var project_core = function () {
       if (element.find('.tk-panel-title-right')) {
         element.find('.tk-panel-title-right').addClass('pull-right float-right');
         tpl.find('.tp-title').parent().append(element.find('.tk-panel-title-right'));
+        //tpl.find('.tp-title').parent().parent().append(element.find('.tk-panel-title-right'));
       }
       element.before(tpl);
       element.detach();
@@ -651,13 +680,12 @@ var project_core = function () {
   };
 
 
-
   return {
     initSugar: initSugar
     , initDatetimePicker: initDatetimePicker
     , initLinkBlur: initLinkBlur
-    , initTkInputLock: initTkInputLock
     , initTkFileInput: initTkFileInput
+    , initTkInputLock: initTkInputLock
     , initDualListBox: initDualListBox
     , initCodemirror: initCodemirror
     , initTinymce: initTinymce

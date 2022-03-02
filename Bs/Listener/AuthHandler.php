@@ -1,6 +1,8 @@
 <?php
 namespace Bs\Listener;
 
+use Bs\Db\User;
+use Tk\ConfigTrait;
 use Tk\Event\Subscriber;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Tk\Event\AuthEvent;
@@ -13,6 +15,7 @@ use Tk\Auth\AuthEvents;
  */
 class AuthHandler implements Subscriber
 {
+    use ConfigTrait;
 
     /**
      * @param \Symfony\Component\HttpKernel\Event\GetResponseEvent $event
@@ -41,14 +44,16 @@ class AuthHandler implements Subscriber
     public function validatePageAccess($event)
     {
         $config = \Bs\Config::getInstance();
-
-        $urlRole = \Bs\Uri::create()->getRoleType($config->getAvailableUserRoleTypes());
+        // TODO: we need to create an Object pattern that can handle page permissions with exceptions etc...
+        $urlRole = \Bs\Uri::create()->getRoleType(User::getUserTypeList(true));
         if ($urlRole && $urlRole != 'public') {
             if (!$config->getAuthUser()) {  // if no user and the url has permissions set
+                // Save the request URL and redirect once authenticated
+                $config->getSession()->set('auth.redirect.url', \Bs\Uri::create()->toString());
                 $this->getLoginUrl()->redirect();
             }
             // Finally check if the user has access to the url
-            if (!$config->getAuthUser()->hasPermission('type.'.$urlRole)) {
+            if (!$config->getAuthUser()->hasType($urlRole)) {
                 \Tk\Alert::addWarning('1000: You do not have access to the requested page.');
                 $config->getUserHomeUrl($config->getAuthUser())->redirect();
             }
@@ -99,8 +104,10 @@ class AuthHandler implements Subscriber
         if ($user && $user->isActive()) {
             $config->setAuthUser($user);
         }
-
-        if(!$event->getRedirect()) {
+        if ($config->getSession()->has('auth.redirect.url')) {
+            $event->setRedirect(\Bs\Uri::create($config->getSession()->get('auth.redirect.url')));
+            $config->getSession()->remove('auth.redirect.url');
+        } else if(!$event->getRedirect()) {
             $event->setRedirect(\Bs\Config::getInstance()->getUserHomeUrl($user));
         }
     }
@@ -132,6 +139,7 @@ class AuthHandler implements Subscriber
         if (!$url) {
             $event->setRedirect(\Tk\Uri::create('/'));
         }
+
         $auth->clearIdentity();
         if (!$config->getMasqueradeHandler()->isMasquerading()) {
             \Tk\Log::warning('Destroying Session');
@@ -153,7 +161,7 @@ class AuthHandler implements Subscriber
         $user = $event->get('user');
         $config = \Bs\Config::getInstance();
 
-        $url = $this->getRegisterUrl()->set('h', $user->hash);
+        $url = $this->getRegisterUrl()->set('h', $user->getHash());
 
         $message = $config->createMessage();
         $content = sprintf('
@@ -167,8 +175,8 @@ class AuthHandler implements Subscriber
     </p>');
         $message->set('content', $content);
         $message->setSubject('Account Registration.');
-        $message->addTo($user->email);
-        $message->set('name', $user->name);
+        $message->addTo($user->getEmail());
+        $message->set('name', $user->getName());
         $message->set('activate-url', $url->toString());
         \Bs\Config::getInstance()->getEmailGateway()->send($message);
 
@@ -198,8 +206,8 @@ class AuthHandler implements Subscriber
     </p>');
         $message->set('content', $content);
         $message->setSubject('Account Activation.');
-        $message->addTo($user->email);
-        $message->set('name', $user->name);
+        $message->addTo($user->getEmail());
+        $message->set('name', $user->getName());
         $message->set('login-url', $url->toString());
         \Bs\Config::getInstance()->getEmailGateway()->send($message);
 
@@ -229,9 +237,9 @@ class AuthHandler implements Subscriber
     </p>');
         $message->set('content', $content);
         $message->setSubject('Password Recovery');
-        $message->addTo($user->email);
-        $message->set('name', $user->name);
-        $message->set('password', $pass);   // TODO: Find another way we cannot have teh password sent via email
+        $message->addTo($user->getEmail());
+        $message->set('name', $user->getName());
+        $message->set('password', $pass);                   // TODO: Find another way we cannot have the password sent via email
         $message->set('login-url', $url->toString());       // TODO make this url link to the recover password page and they can create a new pass
         \Bs\Config::getInstance()->getEmailGateway()->send($message);
 

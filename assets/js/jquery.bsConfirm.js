@@ -51,8 +51,8 @@
         '      </div>\n' +
         '      <div class="modal-body"></div>\n' +
         '      <div class="modal-footer">\n' +
-        '        <button type="button" class="btn btn-danger btn-no" data-dismiss="modal">Cancel</button>\n' +
-        '        <button type="button" class="btn btn-success btn-yes">OK</button>\n' +
+        '        <button class="btn btn-danger btn-no" data-dismiss="modal">Cancel</button>\n' +
+        '        <button class="btn btn-success btn-yes">OK</button>\n' +
         '      </div>\n' +
         '    </div>\n' +
         '  </div>\n' +

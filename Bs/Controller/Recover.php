@@ -42,7 +42,6 @@ class Recover extends Iface
                 $templatePath = $this->getConfig()->getSitePath() . $this->getConfig()->get('template.login');
             }
             $this->page = $this->getConfig()->getPage($templatePath);
-            $this->page->setController($this);
         }
         return parent::getPage();
     }
@@ -67,7 +66,6 @@ class Recover extends Iface
     {
         if (!$this->form) {
             $this->form = $this->getConfig()->createForm('recover-account');
-            $this->form->setRenderer($this->getConfig()->createFormRenderer($this->form));
         }
 
         $this->form->appendField(new Field\Input('account'))->setLabel('Username / Email');
@@ -129,7 +127,7 @@ class Recover extends Iface
         $template = parent::show();
 
         // Render the form
-        if ($this->form && $this->form->getRenderer() instanceof \Tk\Form\Renderer\Dom) {
+        if ($this->form) {
             $template->appendTemplate('form', $this->form->getRenderer()->show());
         }
 

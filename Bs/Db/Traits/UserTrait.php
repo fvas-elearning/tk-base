@@ -1,6 +1,7 @@
 <?php
 namespace Bs\Db\Traits;
 
+use Bs\Db\User;
 use Bs\Db\UserIface;
 use Bs\Config;
 
@@ -41,7 +42,7 @@ trait UserTrait
     /**
      * Find this institutions owner user
      *
-     * @return UserIface|null
+     * @return UserIface|\Uni\Db\UserIface|User|\Uni\Db\User|null
      * @throws \Exception
      */
     public function getUser()
@@ -60,6 +61,7 @@ trait UserTrait
      */
     public function setUser($user)
     {
+        \Tk\Log::warning('Using Deprecated Method UserTrait::setUser()');
         if ($user instanceof UserIface) {
             $this->user = $user;
             $this->userId = $user->getId();

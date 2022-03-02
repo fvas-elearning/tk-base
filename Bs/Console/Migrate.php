@@ -45,22 +45,19 @@ class Migrate extends Iface
 
         if (count($tables))
             $drop = $this->askConfirmation('Replace the existing database. WARNING: Existing data tables will be deleted! [N]: ', false);
+
         if ($drop) {
             $exclude = array();
             if ($this->getConfig()->isDebug()) {
                 $exclude = array(\Tk\Session\Adapter\Database::$DB_TABLE);
             }
             $db->dropAllTables(true, $exclude);
-        }
-
-
-        // Update Database tables
-        $tables = $db->getTableList();
-        if (count($tables)) {
-            $this->write('Database Upgrade...');
-        } else {
             $this->write('Database Install...');
+        } else {
+            $this->write('Database Upgrade...');
         }
+
+        //$tables = $db->getTableList();
 
         // Migrate new SQL files
         $migrate = new SqlMigrate($db);
@@ -75,11 +72,8 @@ class Migrate extends Iface
             $mm->write($str);
         });
 
-        $this->write('Database Migration Complete');
-        if (!count($tables)) {
-            $this->write('As this is a new DB install login into the site using User: `admin` and Password: `password` and configure your site as needed.');
-        }
-
+        $this->write('Database Migration Complete.');
+        $this->write('Open the site in a browser to complete the site setup: ' . \Tk\Uri::create('/')->toString());
     }
 
 }

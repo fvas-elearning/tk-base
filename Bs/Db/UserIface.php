@@ -17,12 +17,12 @@ interface UserIface extends \Tk\ValidInterface, \Tk\Db\ModelInterface
     /**
      * @return int
      */
-    public function getRoleId();
+    public function getUid();
 
     /**
-     * @return int
+     * @return string
      */
-    public function getUid();
+    public function getType();
 
     /**
      * @return string
@@ -34,6 +34,24 @@ interface UserIface extends \Tk\ValidInterface, \Tk\Db\ModelInterface
      * @return string
      */
     public function getPassword();
+
+    /**
+     * Return the user title. EG: Dr, Ms, Mr, etc
+     * @return string
+     */
+    public function getTitle();
+
+    /**
+     * Return the user Credentials. EG: BVSc, MPhil, MANZCVSc, Dip ACVP
+     * @return string
+     */
+    public function getCredentials();
+
+    /**
+     * Return the user job position/Department. EG: Senior Lecturer
+     * @return string
+     */
+    public function getPosition();
 
     /**
      * This should return the concatenated strings:
@@ -84,22 +102,39 @@ interface UserIface extends \Tk\ValidInterface, \Tk\Db\ModelInterface
     public function getHash();
 
     /**
-     * @return RoleIface
-     */
-    public function getRole();
-
-    /**
      * @return \DateTime|null
      */
     public function getLastLogin();
 
-
+    /**
+     * @param string|array $type
+     * @return bool
+     */
+    public function hasType($type);
 
     /**
-     * NOTE: All old $user->getRole() calls changed to $user->getRoleType() or $user->getRole()->getType()
-     * @return string
-     * @deprecated I want to eventually use the permission system not this function
+     * @return array
      */
-    public function getRoleType();
+    public function getPermissions();
+
+    /**
+     * @param string $name
+     * @return $this
+     */
+    public function addPermission($name);
+
+    /**
+     * @param string $name (optional) If omitted then all permissions are removed
+     * @return $this
+     */
+    public function removePermission($name = null);
+
+    /**
+     * Check if this object has the requested permission
+     *
+     * @param string|string[] $permission
+     * @return bool
+     */
+    public function hasPermission($permission);
 
 }

@@ -1,5 +1,5 @@
 <?php
-namespace Bs\Controller\User;
+namespace Bs\Controller\Member;
 
 use Tk\Request;
 
@@ -19,8 +19,6 @@ class Dashboard extends \Bs\Controller\UserIface
     public function doDefault(Request $request)
     {
         $this->setPageTitle('My Account');
-        // TODO:
-        
         
     }
 
@@ -28,7 +26,7 @@ class Dashboard extends \Bs\Controller\UserIface
     {
         $template = parent::show();
         
-        $template->insertText('name', $this->getAuthUser()->name);
+        $template->insertText('name', $this->getAuthUser()->getName());
         
         return $template;
     }

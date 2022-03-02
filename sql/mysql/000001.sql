@@ -1,4 +1,8 @@
-
+-- --------------------------------------------
+-- @version 3.0.0
+--
+-- @author: Michael Mifsud <info@tropotek.com>
+-- --------------------------------------------
 
 ALTER TABLE user ADD role_id int DEFAULT 0 NOT NULL;
 ALTER TABLE user

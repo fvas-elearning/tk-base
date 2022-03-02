@@ -18,7 +18,7 @@ class UserIface extends Iface
     public function hasAccess($user = null)
     {
         if ($user) {
-            return ($user->isUser());
+            return ($user->isMember());
         }
         return true;
     }

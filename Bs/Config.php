@@ -1,7 +1,14 @@
 <?php
 namespace Bs;
 
+use Bs\Db\Permission;;
+
+use Bs\Db\Status;
+use Bs\Db\StatusMap;
+use Bs\Db\User;
 use Symfony\Component\HttpKernel\Controller\ControllerResolverInterface;
+use Tk\Db\ModelInterface;
+use Tk\Request;
 
 /**
  * @author Michael Mifsud <info@tropotek.com>
@@ -10,7 +17,6 @@ use Symfony\Component\HttpKernel\Controller\ControllerResolverInterface;
  */
 class Config extends \Tk\Config
 {
-
 
     /**
      * init the default params.
@@ -147,6 +153,13 @@ class Config extends \Tk\Config
     public function getRequest()
     {
         if (!parent::getRequest()) {
+            if (is_array($this->get('request.trusted.proxies'))) {
+                \Tk\Request::setTrustedProxies($this->get('request.trusted.proxies'), Request::HEADER_X_FORWARDED_ALL);
+            }
+            if (is_array($this->get('request.trusted.hosts'))) {
+                \Tk\Request::setTrustedHosts($this->get('request.trusted.hosts'));
+            }
+
             $obj = \Tk\Request::createFromGlobals();
             parent::setRequest($obj);
         }
@@ -258,11 +271,12 @@ class Config extends \Tk\Config
      *
      * Note: If you are creating a base lib then the DB really should be sent in via a param or method.
      *
-     * @param string $name
+     * @param ?string|null $name
      * @return mixed|\Tk\Db\Pdo
      */
-    public function getDb($name = 'db')
+    public function getDb($name = null)
     {
+        if (!$name) $name = 'db';
         if (!$this->get('db') && $this->has($name.'.type')) {
             try {
                 $pdo = \Tk\Db\Pdo::getInstance($name, $this->getGroup($name, true));
@@ -373,18 +387,19 @@ class Config extends \Tk\Config
     }
 
     /**
-     * @param string $homeTitle
-     * @param string $homeUrl
      * @return \Tk\Crumbs
      */
-    public function getCrumbs($homeTitle = null, $homeUrl = null)
+    public function getCrumbs()
     {
         if (!$this->get('crumbs')) {
-            if ($homeTitle)
-                \Tk\Crumbs::$homeTitle = $homeTitle;
-            if ($homeUrl)
-                \Tk\Crumbs::$homeUrl = $homeUrl;
-            $obj = \Tk\Crumbs::getInstance();
+            $homeUrl = '/index.html';
+            $homeTitle = 'Dashboard';
+            if (!$this->getAuthUser() || $this->getAuthUser()->hasType(User::TYPE_GUEST)) {
+                $homeTitle = 'Home';
+            } else {
+                $homeUrl = \Bs\Uri::createHomeUrl($homeUrl)->getRelativePath();
+            }
+            $obj = \Tk\Crumbs::getInstance($homeUrl, $homeTitle);
             $this->set('crumbs', $obj);
         }
         return $this->get('crumbs');
@@ -410,19 +425,6 @@ class Config extends \Tk\Config
     }
 
     /**
-     * Get the page role, if multiple roles return the first one.
-     *
-     * @return string
-     * @deprecated
-     */
-//    public function getPageRole()
-//    {
-//        $role = $this->getRequest()->getAttribute('role');
-//        if (is_array($role)) $role = current($role);
-//        return $role;
-//    }
-
-    /**
      * @param string $formId
      * @return \Tk\Form
      */
@@ -430,6 +432,8 @@ class Config extends \Tk\Config
     {
         $form = \Tk\Form::create($formId);
         $form->setDispatcher($this->getEventDispatcher());
+        // TODO: check this does not cause issues
+        $form->setRenderer($this->createFormRenderer($form));
         return $form;
     }
 
@@ -439,7 +443,8 @@ class Config extends \Tk\Config
      */
     public function createFormRenderer($form)
     {
-        $obj = \Tk\Form\Renderer\Dom::create($form);
+        $obj = \Tk\Form\Renderer\DomRenderer::create($form);
+        //$obj = \Tk\Form\Renderer\Dom::create($form);
         $obj->setFieldGroupRenderer($this->getFormFieldGroupRenderer($form));
         $obj->getLayout()->setDefaultCol('col');
         return $obj;
@@ -483,22 +488,26 @@ class Config extends \Tk\Config
     // ------------------------------- Commonly Overridden ---------------------------------------
 
     /**
-     * @return Db\RoleMap
+     * Return the user types available to the system
+     *
+     * It is important to order types from most permissions (admin) to least permissions (member/student)
+     * this will be used in masquerading log-ins
+     *
+     * @param bool $valuesOnly (optional) return the type values with no name keys
+     * @return array
      */
-    public function getRoleMapper()
+    public function getUserTypeList($valuesOnly = false)
     {
-        if (!$this->get('obj.mapper.role')) {
-            $this->set('obj.mapper.role', Db\RoleMap::create());
+        $arr = $this->get('user.type.list');
+        if (!is_array($arr))
+            $arr = array(
+                'Administrator' => 'admin',
+                'Member' => 'member'
+            );
+        if ($valuesOnly) {
+            $arr = array_values($arr);
         }
-        return $this->get('obj.mapper.role');
-    }
-
-    /**
-     * @return Db\RoleIface
-     */
-    public function createRole()
-    {
-        return new Db\Role();
+        return $arr;
     }
 
     /**
@@ -513,6 +522,7 @@ class Config extends \Tk\Config
     }
 
     /**
+     * Get the user for the Auth object getIdentity() method
      * @param Db\UserIface $user
      * @return int|string
      */
@@ -529,8 +539,6 @@ class Config extends \Tk\Config
         return new Db\User();
     }
 
-
-
     /**
      * @param int $id
      * @return null|\Tk\Db\Map\Model|\Tk\Db\ModelInterface|Db\UserIface
@@ -543,7 +551,19 @@ class Config extends \Tk\Config
     }
 
     /**
-     * @return Db\UserIface
+     * Do we have an authorized user logged in
+     * @param null $user
+     * @return bool
+     */
+    public function hasAuthUser($user = null)
+    {
+        if (!$user) $user = $this->getAuthUser();
+        if (!$user || !$user->getType()) return false;
+        return !$user->hasType(User::TYPE_GUEST);
+    }
+
+    /**
+     * @return Db\UserIface|\|App\Db\User
      */
     public function getAuthUser()
     {
@@ -569,17 +589,48 @@ class Config extends \Tk\Config
     public function getUserHomeUrl($user = null)
     {
         if (!$user) $user = $this->getAuthUser();
+        if (!$user) return \Bs\Uri::create('/login.html');
         return \Bs\Uri::createHomeUrl('/index.html', $user);
     }
 
     /**
+     * @param string $type (optional) If set returns only the permissions for that user type otherwise returns all permissions
      * @return array
+     * @deprecated Use getConfig()->getPermission()->getAvailablePermissionList($type);
      */
-    public function getAvailableUserRoleTypes()
+    public function getPermissionList($type = '')
     {
-        $a = $this->getRoleMapper()->findAllTypes();
-        return $a;
+        return $this->getPermission()->getAvailablePermissionList($type);
     }
+
+    /**
+     * @return Permission|null
+     */
+    public function getPermission()
+    {
+        return \Bs\Db\Permission::getInstance();
+    }
+
+
+    /**
+     *
+     * @param ModelInterface $model
+     * @return Status
+     */
+    public function createStatus($model)
+    {
+        return Status::create($model);
+    }
+
+    /**
+     * @param ModelInterface $model
+     * @return StatusMap
+     */
+    public function getStatusMap()
+    {
+        return StatusMap::create();
+    }
+
 
     /**
      * getFrontController
@@ -660,6 +711,7 @@ class Config extends \Tk\Config
             $app->add(new \Bs\Console\DbBackup());
             $app->add(new \Bs\Console\UserPass());
             $app->add(new \Bs\Console\Migrate());
+            $app->add(new \Bs\Console\CleanData());
             if ($this->isDebug()) {
                 $app->add(new \Bs\Console\MakeModel());
                 $app->add(new \Bs\Console\MakeTable());
@@ -677,14 +729,36 @@ class Config extends \Tk\Config
     }
 
     /**
-     * @return \Bs\Listener\PageTemplateHandler
+     * @return \Tk\Listener\CrumbsHandler
      */
     public function getCrumbsHandler()
     {
         if (!$this->get('handler.crumbs')) {
-            $this->set('handler.crumbs', new \Bs\Listener\CrumbsHandler());
+            $this->set('handler.crumbs', new \Tk\Listener\CrumbsHandler());
         }
         return $this->get('handler.crumbs');
+    }
+
+    /**
+     * @return \Bs\Listener\StatusHandler
+     */
+    public function getStatusHandler()
+    {
+        if (!$this->get('handler.status')) {
+            $this->set('handler.status', new \Bs\Listener\StatusHandler());
+        }
+        return $this->get('handler.status');
+    }
+
+    /**
+     * @return \Bs\Listener\InstallHandler
+     */
+    public function getInstallHandler()
+    {
+        if (!$this->get('handler.installer')) {
+            $this->set('handler.installer', new \Bs\Listener\InstallHandler());
+        }
+        return $this->get('handler.installer');
     }
 
     /**
@@ -732,4 +806,29 @@ class Config extends \Tk\Config
         return new Page($templatePath);
     }
 
+    /**
+     * validate a filename and see if we think it is a script or a harmful file
+     * to upload to the server
+     *
+     * @param string $filename
+     * @return bool
+     */
+    public static function validateFile($filename)
+    {
+        $filename = basename($filename);
+        $ext = trim(\Tk\File::getExtension($filename), '.');
+        // TODO: make these configurable in the config.php
+        $exclude = array('exe', 'com', 'php', 'perl', 'php5', 'php4', 'html', 'css', 'js');
+        $include = array();
+
+        if (count($exclude)) {
+            if (in_array($ext, $exclude)) {
+                return false;
+            }
+        }
+        if (count($include)) {
+            return in_array($ext, $include);
+        }
+        return true;
+    }
 }
